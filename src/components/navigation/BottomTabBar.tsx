@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Link, usePathname } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -31,8 +30,7 @@ export function BottomTabBar() {
           return (
             <Link key={item.id} href={item.href as never} asChild>
               <Pressable style={styles.tab}>
-                <Ionicons name={item.icon} size={20} color={ativo ? colors.blue : colors.textSecondary} />
-                <Text style={[styles.tabLabel, ativo && styles.tabLabelActive]} numberOfLines={1}>
+                <Text style={[styles.tabLabel, ativo && styles.tabLabelActive]} numberOfLines={2}>
                   {item.label}
                 </Text>
               </Pressable>
@@ -41,7 +39,6 @@ export function BottomTabBar() {
         })}
         {secundarios.length > 0 ? (
           <Pressable style={styles.tab} onPress={() => setMaisAberto(true)}>
-            <Ionicons name="menu-outline" size={20} color={colors.textSecondary} />
             <Text style={styles.tabLabel}>Mais</Text>
           </Pressable>
         ) : null}
@@ -53,7 +50,6 @@ export function BottomTabBar() {
             {secundarios.map((item) => (
               <Link key={item.id} href={item.href as never} asChild>
                 <Pressable style={styles.sheetItem} onPress={() => setMaisAberto(false)}>
-                  <Ionicons name={item.icon} size={18} color={colors.textPrimary} />
                   <Text style={styles.sheetItemLabel}>{item.label}</Text>
                 </Pressable>
               </Link>
@@ -73,8 +69,8 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     paddingTop: spacing.xs,
   },
-  tab: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 4 },
-  tabLabel: { ...typography.caption, color: colors.textSecondary, fontSize: 11 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 2 },
+  tabLabel: { ...typography.caption, color: colors.textSecondary, fontSize: 11, textAlign: 'center' },
   tabLabelActive: { color: colors.blue, fontWeight: '600' },
   overlay: { flex: 1, backgroundColor: 'rgba(11,37,69,0.35)', justifyContent: 'flex-end' },
   sheet: {
