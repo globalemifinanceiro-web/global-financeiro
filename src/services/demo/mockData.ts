@@ -1,3 +1,4 @@
+import { EMPRESAS, type NomeEmpresa } from '@/constants/empresas';
 import type { AlertaFinanceiro, ContaFinanceira, OpcoesFiltro } from '@/types/finance';
 import { createSeededRandom, pickFrom, randomFloat, randomInt } from './seededRandom';
 
@@ -5,31 +6,40 @@ import { createSeededRandom, pickFrom, randomFloat, randomInt } from './seededRa
  * Todos os nomes abaixo são fictícios, criados só para preencher o modo de demonstração.
  * Nenhum dado real de cliente, fornecedor ou obra da Global Engenharia é usado aqui.
  *
- * As duas empresas (CNPJs) têm projetos, clientes, fornecedores e contas correntes próprios —
- * só categorias e departamentos são compartilhados entre elas (classificação contábil comum).
- * O CNPJ de cada uma ainda não foi informado; por enquanto só o nome é exibido no app.
+ * As três empresas (CNPJs, ver src/constants/empresas.ts) têm projetos, clientes, fornecedores e
+ * contas correntes próprios — só categorias e departamentos são compartilhados entre elas
+ * (classificação contábil comum).
  */
-export const EMPRESAS_DEMO = ['Global Engenharia', 'Global Montagem'] as const;
-type EmpresaDemo = (typeof EMPRESAS_DEMO)[number];
+export const EMPRESAS_DEMO = EMPRESAS;
+type EmpresaDemo = NomeEmpresa;
 
 const PROJETOS_POR_EMPRESA: Record<EmpresaDemo, string[]> = {
   'Global Engenharia': ['Obra Residencial Jardins', 'Obra Comercial Centro', 'Condomínio Vista Verde', 'Rodovia BR-101 - Trecho 4'],
   'Global Montagem': ['Reforma Galpão Industrial', 'Ampliação Fábrica Norte', 'Obra Hospital Regional', 'Reforma Escola Municipal'],
+  'Global Serviço': [
+    'Contrato de Manutenção Predial - Alfa',
+    'Contrato de Manutenção Industrial - Beta',
+    'Inspeção Técnica - Gama',
+    'Contrato de Suporte Elétrico - Delta',
+  ],
 };
 
 const CLIENTES_POR_EMPRESA: Record<EmpresaDemo, string[]> = {
   'Global Engenharia': ['Incorporadora Horizonte S.A.', 'Prefeitura Municipal (Contrato Público)', 'Condomínio Vista Verde'],
   'Global Montagem': ['Shopping Nova Era', 'Indústria Beta S.A.', 'Hospital Regional Fundação Saúde'],
+  'Global Serviço': ['Condomínio Empresarial Delta', 'Distribuidora Atlas S.A.', 'Grupo Vitória Alimentos'],
 };
 
 const FORNECEDORES_POR_EMPRESA: Record<EmpresaDemo, string[]> = {
   'Global Engenharia': ['Construtora Alfa Ltda', 'Materiais Gama Distribuidora', 'Concreto Prime Ltda', 'Ferragens União'],
   'Global Montagem': ['Fornecedora Delta Elétrica', 'Locadora Ômega Equipamentos', 'Transportes Sigma', 'Consultoria Vetor Engenharia'],
+  'Global Serviço': ['Ferramentas & Cia Ltda', 'EPI Total Distribuidora', 'Manutenção Rápida Serviços', 'Elétrica Sul Peças'],
 };
 
 const CONTAS_CORRENTES_POR_EMPRESA: Record<EmpresaDemo, string[]> = {
   'Global Engenharia': ['Banco do Brasil - CC 12345-6', 'Bradesco - CC 5551-2'],
   'Global Montagem': ['Itaú - CC 98765-4', 'Santander - CC 4420-9'],
+  'Global Serviço': ['Caixa Econômica - CC 3301-0', 'Banco Inter - CC 778899-1'],
 };
 
 export const CATEGORIAS_DEMO = [

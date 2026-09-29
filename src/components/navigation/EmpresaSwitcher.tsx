@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { CNPJ_POR_EMPRESA, type NomeEmpresa } from '@/constants/empresas';
 import { useOpcoesFiltro } from '@/hooks/useFinanceData';
 import { useFiltrosStore } from '@/stores/useFiltrosStore';
 import { colors, radius, spacing, typography } from '@/theme';
@@ -7,7 +8,6 @@ import { colors, radius, spacing, typography } from '@/theme';
 /**
  * Cada empresa (CNPJ) tem seus próprios clientes, fornecedores, projetos e contas correntes —
  * por isso é um botão fixo e sempre visível, não "mais um filtro" entre outros.
- * Por enquanto mostra só o nome; quando os CNPJs forem confirmados, o número entra aqui também.
  */
 export function EmpresaSwitcher() {
   const { data: opcoes } = useOpcoesFiltro();
@@ -40,6 +40,9 @@ export function EmpresaSwitcher() {
               <Text style={[styles.pillLabel, ativa && styles.pillLabelAtiva]} numberOfLines={1}>
                 {empresa}
               </Text>
+              <Text style={[styles.pillCnpj, ativa && styles.pillCnpjAtivo]} numberOfLines={1}>
+                {CNPJ_POR_EMPRESA[empresa as NomeEmpresa] ?? ''}
+              </Text>
             </Pressable>
           );
         })}
@@ -65,12 +68,15 @@ const styles = StyleSheet.create({
   pill: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
-    borderRadius: radius.full,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.background,
+    alignItems: 'center',
   },
   pillAtiva: { backgroundColor: colors.navy, borderColor: colors.navy },
   pillLabel: { ...typography.captionStrong, color: colors.textPrimary },
   pillLabelAtiva: { color: colors.textInverse },
+  pillCnpj: { ...typography.caption, fontSize: 10, color: colors.textSecondary },
+  pillCnpjAtivo: { color: 'rgba(255,255,255,0.7)' },
 });
