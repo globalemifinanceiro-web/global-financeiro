@@ -1,11 +1,13 @@
 import { usePathname } from 'expo-router';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { AlertaVencimentoModal } from '@/components/notasFiscais/AlertaVencimentoModal';
 import { BottomTabBar } from './BottomTabBar';
 import { EmpresaSwitcher } from './EmpresaSwitcher';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { NAV_ITEMS } from '@/constants/navigation';
+import { useAlertaVencimentoNF } from '@/hooks/useAlertaVencimentoNF';
 import { breakpoints, colors, spacing } from '@/theme';
 
 const TITULOS_EXTRA: Record<string, string> = {
@@ -23,6 +25,11 @@ export function AppShell({ children }: AppShellProps) {
   const title =
     NAV_ITEMS.find((item) => pathname.startsWith(item.href))?.label ?? TITULOS_EXTRA[pathname] ?? 'Global Financeiro';
 
+  // Verificado uma vez aqui (não em cada tela) para o pop-up de vencimento de notas fiscais
+  // disparar não importa em qual tela o usuário esteja.
+  const { paraAlertar, dispensar } = useAlertaVencimentoNF();
+  const alertaModal = <AlertaVencimentoModal notas={paraAlertar} onFechar={dispensar} />;
+
   if (isWide) {
     return (
       <View style={styles.wideRoot}>
@@ -34,6 +41,7 @@ export function AppShell({ children }: AppShellProps) {
             <View style={styles.maxWidth}>{children}</View>
           </ScrollView>
         </View>
+        {alertaModal}
       </View>
     );
   }
@@ -44,6 +52,7 @@ export function AppShell({ children }: AppShellProps) {
       <EmpresaSwitcher />
       <ScrollView contentContainerStyle={styles.scrollContentMobile}>{children}</ScrollView>
       <BottomTabBar />
+      {alertaModal}
     </View>
   );
 }

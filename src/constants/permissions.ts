@@ -4,6 +4,7 @@ export type PainelId =
   | 'dashboard'
   | 'contas-a-pagar'
   | 'contas-a-receber'
+  | 'notas-fiscais'
   | 'fluxo-de-caixa'
   | 'projetos'
   | 'relatorios'
@@ -22,6 +23,7 @@ const PERMISSOES: Record<PerfilAcesso, PainelId[]> = {
     'dashboard',
     'contas-a-pagar',
     'contas-a-receber',
+    'notas-fiscais',
     'fluxo-de-caixa',
     'projetos',
     'relatorios',
@@ -30,11 +32,22 @@ const PERMISSOES: Record<PerfilAcesso, PainelId[]> = {
     'configuracoes',
     'integracoes',
   ],
-  diretoria: ['dashboard', 'contas-a-pagar', 'contas-a-receber', 'fluxo-de-caixa', 'projetos', 'relatorios', 'alertas', 'perfil'],
+  diretoria: [
+    'dashboard',
+    'contas-a-pagar',
+    'contas-a-receber',
+    'notas-fiscais',
+    'fluxo-de-caixa',
+    'projetos',
+    'relatorios',
+    'alertas',
+    'perfil',
+  ],
   financeiro: [
     'dashboard',
     'contas-a-pagar',
     'contas-a-receber',
+    'notas-fiscais',
     'fluxo-de-caixa',
     'projetos',
     'relatorios',
