@@ -47,6 +47,14 @@ export function NotaFiscalListItem({ nota }: { nota: NotaFiscal }) {
   }
 
   function excluirNota() {
+    // Alert.alert não tem implementação garantida na versão web do React Native — usa confirm()
+    // nativo do navegador ali, e o diálogo do React Native nas plataformas móveis.
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Remover a nota de ${nota.clienteOuFornecedor}?`)) {
+        excluir.mutate({ id: nota.id, arquivoPath: nota.arquivoPath });
+      }
+      return;
+    }
     Alert.alert('Excluir nota fiscal', `Remover a nota de ${nota.clienteOuFornecedor}?`, [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Excluir', style: 'destructive', onPress: () => excluir.mutate({ id: nota.id, arquivoPath: nota.arquivoPath }) },
