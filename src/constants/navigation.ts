@@ -13,6 +13,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'contas-a-pagar', label: 'Contas a Pagar', href: '/contas-a-pagar', icon: 'arrow-up-circle-outline' },
   { id: 'contas-a-receber', label: 'Contas a Receber', href: '/contas-a-receber', icon: 'arrow-down-circle-outline' },
   { id: 'notas-fiscais', label: 'Notas Fiscais', href: '/notas-fiscais', icon: 'receipt-outline' },
+  { id: 'central-pagamentos', label: 'Central de Pagamentos', href: '/central-pagamentos', icon: 'card-outline' },
   { id: 'fluxo-de-caixa', label: 'Fluxo de Caixa', href: '/fluxo-de-caixa', icon: 'trending-up-outline' },
   { id: 'projetos', label: 'Projetos e Obras', href: '/projetos', icon: 'business-outline' },
   { id: 'relatorios', label: 'Relatórios', href: '/relatorios', icon: 'document-text-outline' },

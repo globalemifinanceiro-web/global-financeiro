@@ -1,5 +1,8 @@
 export type SituacaoNF = 'pendente' | 'paga' | 'cancelada';
 
+export type FormaPagamento = 'Pix' | 'Boleto' | 'Transferência' | 'Cartão' | 'Dinheiro' | 'Outra';
+export const FORMAS_PAGAMENTO: FormaPagamento[] = ['Pix', 'Boleto', 'Transferência', 'Cartão', 'Dinheiro', 'Outra'];
+
 export interface NotaFiscal {
   id: string;
   empresa: string;
@@ -8,6 +11,9 @@ export interface NotaFiscal {
   valor: number;
   vencimento: string; // ISO date (YYYY-MM-DD)
   situacao: SituacaoNF;
+  formaPagamento: string | null;
+  /** Já chegou assinada pelos responsáveis (aprovação registrada fora deste app, por enquanto). */
+  assinado: boolean;
   arquivoPath: string | null;
   arquivoNome: string | null;
   observacoes: string | null;

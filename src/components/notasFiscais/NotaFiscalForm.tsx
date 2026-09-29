@@ -4,10 +4,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
+import { SelectField } from '@/components/ui/SelectField';
 import { TextField } from '@/components/ui/TextField';
+import { EMPRESAS } from '@/constants/empresas';
 import { useCriarNotaFiscal } from '@/hooks/useNotasFiscais';
 import { enviarArquivoNotaFiscal } from '@/services/supabase/notasFiscais';
 import { colors, radius, spacing, typography } from '@/theme';
+import { FORMAS_PAGAMENTO } from '@/types/notaFiscal';
 
 interface ArquivoSelecionado {
   uri: string;
@@ -27,20 +30,26 @@ export function NotaFiscalForm({
   onFechar: () => void;
 }) {
   const criar = useCriarNotaFiscal();
+  const [empresa, setEmpresa] = useState(empresaPadrao);
   const [cliente, setCliente] = useState('');
   const [numeroDocumento, setNumeroDocumento] = useState('');
   const [valor, setValor] = useState('');
   const [vencimento, setVencimento] = useState('');
+  const [formaPagamento, setFormaPagamento] = useState<string | undefined>(undefined);
+  const [assinado, setAssinado] = useState(false);
   const [observacoes, setObservacoes] = useState('');
   const [arquivo, setArquivo] = useState<ArquivoSelecionado | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   function limpar() {
+    setEmpresa(empresaPadrao);
     setCliente('');
     setNumeroDocumento('');
     setValor('');
     setVencimento('');
+    setFormaPagamento(undefined);
+    setAssinado(false);
     setObservacoes('');
     setArquivo(null);
     setErro(null);
@@ -86,11 +95,13 @@ export function NotaFiscalForm({
       }
 
       await criar.mutateAsync({
-        empresa: empresaPadrao,
+        empresa,
         clienteOuFornecedor: cliente.trim(),
         numeroDocumento: numeroDocumento.trim() || null,
         valor: valorNumerico,
         vencimento,
+        formaPagamento: formaPagamento ?? null,
+        assinado,
         arquivoPath,
         arquivoNome,
         observacoes: observacoes.trim() || null,
@@ -118,8 +129,11 @@ export function NotaFiscalForm({
 
           <ScrollView contentContainerStyle={styles.form}>
             <Text style={styles.nota}>
-              A leitura automática do documento ainda não está disponível — anexe o arquivo e preencha os dados abaixo.
+              A leitura automática do documento ainda não está disponível — escolha o CNPJ certo e preencha os dados
+              abaixo; é isso que decide para qual central esta nota vai.
             </Text>
+
+            <SelectField label="Empresa (CNPJ)" value={empresa} options={[...EMPRESAS]} onChange={(v) => v && setEmpresa(v)} />
 
             <View style={styles.anexoRow}>
               <PrimaryButton label="Escolher arquivo" variant="ghost" onPress={escolherArquivo} />
@@ -138,6 +152,19 @@ export function NotaFiscalForm({
             <TextField label="Número do documento (opcional)" value={numeroDocumento} onChangeText={setNumeroDocumento} placeholder="Ex.: 12345" />
             <TextField label="Valor (R$)" value={valor} onChangeText={setValor} placeholder="0,00" keyboardType="decimal-pad" />
             <TextField label="Vencimento" value={vencimento} onChangeText={setVencimento} placeholder="AAAA-MM-DD" />
+            <SelectField
+              label="Forma de pagamento"
+              value={formaPagamento}
+              options={FORMAS_PAGAMENTO}
+              onChange={setFormaPagamento}
+              placeholder="Selecione"
+            />
+
+            <Pressable style={styles.checkboxRow} onPress={() => setAssinado((v) => !v)}>
+              <Ionicons name={assinado ? 'checkbox' : 'square-outline'} size={20} color={assinado ? colors.positive : colors.textSecondary} />
+              <Text style={styles.checkboxLabel}>Já chegou assinada pelos responsáveis</Text>
+            </Pressable>
+
             <TextField label="Observações (opcional)" value={observacoes} onChangeText={setObservacoes} placeholder="Notas internas" />
 
             {erro ? <Text style={styles.erro}>{erro}</Text> : null}
@@ -166,5 +193,7 @@ const styles = StyleSheet.create({
   anexoRow: { flexDirection: 'row', gap: spacing.sm },
   anexoSelecionado: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   anexoNome: { ...typography.caption, color: colors.textPrimary, flexShrink: 1 },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  checkboxLabel: { ...typography.body, color: colors.textPrimary },
   erro: { ...typography.caption, color: colors.negative },
 });

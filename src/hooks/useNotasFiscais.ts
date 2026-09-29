@@ -19,6 +19,15 @@ export function useNotasFiscais() {
   });
 }
 
+/** Todas as notas, de todas as empresas — usada pela Central de Pagamentos (3 painéis lado a lado). */
+export function useTodasNotasFiscais() {
+  return useQuery({
+    queryKey: [CHAVE, 'todas'],
+    queryFn: () => listarNotasFiscais(),
+    refetchInterval: 5 * 60 * 1000,
+  });
+}
+
 export function useCriarNotaFiscal() {
   const queryClient = useQueryClient();
   return useMutation({

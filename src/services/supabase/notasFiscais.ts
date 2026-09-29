@@ -11,6 +11,8 @@ interface NotaFiscalRow {
   valor: number;
   vencimento: string;
   situacao: SituacaoNF;
+  forma_pagamento: string | null;
+  assinado: boolean;
   arquivo_path: string | null;
   arquivo_nome: string | null;
   observacoes: string | null;
@@ -26,6 +28,8 @@ function paraNotaFiscal(row: NotaFiscalRow): NotaFiscal {
     valor: Number(row.valor),
     vencimento: row.vencimento,
     situacao: row.situacao,
+    formaPagamento: row.forma_pagamento,
+    assinado: row.assinado,
     arquivoPath: row.arquivo_path,
     arquivoNome: row.arquivo_nome,
     observacoes: row.observacoes,
@@ -51,6 +55,8 @@ export async function criarNotaFiscal(nota: NovaNotaFiscal): Promise<NotaFiscal>
       valor: nota.valor,
       vencimento: nota.vencimento,
       situacao: nota.situacao ?? 'pendente',
+      forma_pagamento: nota.formaPagamento,
+      assinado: nota.assinado ?? false,
       arquivo_path: nota.arquivoPath,
       arquivo_nome: nota.arquivoNome,
       observacoes: nota.observacoes,
