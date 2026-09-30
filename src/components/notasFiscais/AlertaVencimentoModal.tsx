@@ -2,14 +2,30 @@ import { Ionicons } from '@expo/vector-icons';
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import type { NotaFiscal } from '@/types/notaFiscal';
+import type { SituacaoNF } from '@/types/notaFiscal';
 import { formatBRL } from '@/utils/currency';
 import { formatDateBR } from '@/utils/date';
 import { STATUS_NF_LABEL, statusVencimento } from '@/utils/notaFiscalStatus';
 import { STATUS_NF_TONE } from '@/utils/statusMappers';
 import { colors, radius, spacing, typography } from '@/theme';
 
-export function AlertaVencimentoModal({ notas, onFechar }: { notas: NotaFiscal[]; onFechar: () => void }) {
+export interface ItemComVencimento {
+  id: string;
+  clienteOuFornecedor: string;
+  vencimento: string;
+  valor: number;
+  situacao: SituacaoNF;
+}
+
+export function AlertaVencimentoModal({
+  notas,
+  onFechar,
+  titulo = 'Notas fiscais precisando de atenção',
+}: {
+  notas: ItemComVencimento[];
+  onFechar: () => void;
+  titulo?: string;
+}) {
   const visivel = notas.length > 0;
 
   return (
@@ -18,7 +34,7 @@ export function AlertaVencimentoModal({ notas, onFechar }: { notas: NotaFiscal[]
         <View style={styles.card}>
           <View style={styles.header}>
             <Ionicons name="alert-circle" size={22} color={colors.negative} />
-            <Text style={styles.titulo}>Notas fiscais precisando de atenção</Text>
+            <Text style={styles.titulo}>{titulo}</Text>
           </View>
           <ScrollView style={styles.lista}>
             {notas.map((nota) => {

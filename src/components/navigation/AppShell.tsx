@@ -7,6 +7,7 @@ import { EmpresaSwitcher } from './EmpresaSwitcher';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { NAV_ITEMS } from '@/constants/navigation';
+import { useAlertaCobranca } from '@/hooks/useAlertaCobranca';
 import { useAlertaVencimentoNF } from '@/hooks/useAlertaVencimentoNF';
 import { breakpoints, colors, spacing } from '@/theme';
 
@@ -25,10 +26,17 @@ export function AppShell({ children }: AppShellProps) {
   const title =
     NAV_ITEMS.find((item) => pathname.startsWith(item.href))?.label ?? TITULOS_EXTRA[pathname] ?? 'Global Financeiro';
 
-  // Verificado uma vez aqui (não em cada tela) para o pop-up de vencimento de notas fiscais
-  // disparar não importa em qual tela o usuário esteja.
+  // Verificado uma vez aqui (não em cada tela) para os pop-ups de vencimento dispararem não
+  // importa em qual tela o usuário esteja. O de cobrança só aparece depois que o de notas fiscais
+  // for dispensado, pra não empilhar dois modais ao mesmo tempo.
   const { paraAlertar, dispensar } = useAlertaVencimentoNF();
-  const alertaModal = <AlertaVencimentoModal notas={paraAlertar} onFechar={dispensar} />;
+  const { paraAlertar: paraCobrar, dispensar: dispensarCobranca } = useAlertaCobranca();
+  const alertaModal =
+    paraAlertar.length > 0 ? (
+      <AlertaVencimentoModal notas={paraAlertar} onFechar={dispensar} />
+    ) : (
+      <AlertaVencimentoModal notas={paraCobrar} onFechar={dispensarCobranca} titulo="Clientes com cobrança pendente" />
+    );
 
   if (isWide) {
     return (

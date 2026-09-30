@@ -1,11 +1,28 @@
 import { toLocalDate } from '@/utils/date';
 import type {
   ContaFinanceira,
+  FiltrosFinanceiros,
   FluxoCaixaMensal,
   ResultadoPorProjeto,
   ResumoFinanceiro,
   ValorPorCategoria,
 } from '@/types/finance';
+
+/** Aplica os filtros do FiltersBar a uma lista de contas — comum ao modo demo e ao real. */
+export function aplicarFiltros(contas: ContaFinanceira[], filtros: FiltrosFinanceiros): ContaFinanceira[] {
+  return contas.filter((conta) => {
+    if (filtros.empresa && conta.empresa !== filtros.empresa) return false;
+    if (filtros.projeto && conta.projeto !== filtros.projeto) return false;
+    if (filtros.clienteOuFornecedor && conta.clienteOuFornecedor !== filtros.clienteOuFornecedor) return false;
+    if (filtros.categoria && conta.categoria !== filtros.categoria) return false;
+    if (filtros.departamento && conta.departamento !== filtros.departamento) return false;
+    if (filtros.contaCorrente && conta.contaCorrente !== filtros.contaCorrente) return false;
+    if (filtros.situacao && conta.situacao !== filtros.situacao) return false;
+    if (filtros.periodoInicio && toLocalDate(conta.vencimento) < toLocalDate(filtros.periodoInicio)) return false;
+    if (filtros.periodoFim && toLocalDate(conta.vencimento) > toLocalDate(filtros.periodoFim)) return false;
+    return true;
+  });
+}
 
 function startOfDay(date: Date): Date {
   const copy = new Date(date);

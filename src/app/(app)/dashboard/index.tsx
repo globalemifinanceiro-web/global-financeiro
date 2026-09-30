@@ -6,6 +6,7 @@ import { FluxoCaixaCard } from '@/components/dashboard/FluxoCaixaCard';
 import { ProximosVencimentosCard } from '@/components/dashboard/ProximosVencimentosCard';
 import { ResultadoPorProjetoCard } from '@/components/dashboard/ResultadoPorProjetoCard';
 import { ResumoGrid } from '@/components/dashboard/ResumoGrid';
+import { ResumoRecebimentoCard } from '@/components/dashboard/ResumoRecebimentoCard';
 import { DemoBanner } from '@/components/ui/DemoBanner';
 import { ErrorState, LoadingState } from '@/components/ui/StateViews';
 import { useResumoFinanceiro } from '@/hooks/useFinanceData';
@@ -19,6 +20,8 @@ export default function DashboardScreen() {
     <View style={styles.container}>
       <DemoBanner />
       <FiltersBar />
+
+      <ResumoRecebimentoCard />
 
       {isLoading ? (
         <LoadingState label="Carregando resumo financeiro..." />
