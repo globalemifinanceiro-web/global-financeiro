@@ -22,6 +22,8 @@ export interface ContaFinanceira {
 export interface FiltrosFinanceiros {
   periodoInicio?: string;
   periodoFim?: string;
+  /** Mês do ano vigente (1–12); vazio = ano todo. Ver src/utils/periodo.ts. */
+  mes?: number;
   empresa?: string;
   projeto?: string;
   clienteOuFornecedor?: string;
@@ -52,6 +54,9 @@ export interface ResumoFinanceiro {
   vencimento30Dias: number;
   receitasDoMes: number;
   despesasDoMes: number;
+  /** Média por mês do que efetivamente entrou/saiu (títulos liquidados) no período. */
+  mediaMensalEntradas: number;
+  mediaMensalSaidas: number;
   ultimaSincronizacao: string; // ISO datetime
 }
 

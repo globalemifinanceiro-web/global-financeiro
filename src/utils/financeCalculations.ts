@@ -1,4 +1,5 @@
 import { toLocalDate } from '@/utils/date';
+import { ANO_VIGENTE, dataReferencia, noPeriodo } from '@/utils/periodo';
 import type {
   ContaFinanceira,
   FiltrosFinanceiros,
@@ -20,7 +21,7 @@ export function aplicarFiltros(contas: ContaFinanceira[], filtros: FiltrosFinanc
     if (filtros.situacao && conta.situacao !== filtros.situacao) return false;
     if (filtros.periodoInicio && toLocalDate(conta.vencimento) < toLocalDate(filtros.periodoInicio)) return false;
     if (filtros.periodoFim && toLocalDate(conta.vencimento) > toLocalDate(filtros.periodoFim)) return false;
-    return true;
+    return noPeriodo(dataReferencia(conta), conta.situacao !== 'liquidado', filtros.mes);
   });
 }
 
@@ -65,41 +66,58 @@ export function somarVencendoEm(contas: ContaFinanceira[], referenceDate: Date, 
     .reduce((total, conta) => total + conta.valorLiquido, 0);
 }
 
-/** Monta o resumo financeiro consolidado a partir das listas de contas a pagar e a receber. */
+function somarLiquidados(contas: ContaFinanceira[]): number {
+  return contas.filter((conta) => conta.situacao === 'liquidado').reduce((total, conta) => total + conta.valorLiquido, 0);
+}
+
+/**
+ * Monta o resumo financeiro consolidado a partir das listas de contas a pagar e a receber (já
+ * filtradas pelo período). `mesFiltro` é o mês escolhido no filtro: vira o "mês" dos KPIs de mês;
+ * sem ele, vale o mês corrente.
+ */
 export function calcularResumoFinanceiro(
   contasPagar: ContaFinanceira[],
   contasReceber: ContaFinanceira[],
   referenceDate: Date,
-  ultimaSincronizacao: string
+  ultimaSincronizacao: string,
+  mesFiltro?: number
 ): ResumoFinanceiro {
   const totalAPagar = somarEmAberto(contasPagar);
   const totalAReceber = somarEmAberto(contasReceber);
 
+  const mesReferencia = mesFiltro ? new Date(ANO_VIGENTE, mesFiltro - 1, 1) : referenceDate;
   const receitasDoMes = contasReceber
-    .filter((conta) => isMesmoMes(conta.vencimento, referenceDate))
+    .filter((conta) => isMesmoMes(dataReferencia(conta), mesReferencia))
     .reduce((total, conta) => total + conta.valorLiquido, 0);
   const despesasDoMes = contasPagar
-    .filter((conta) => isMesmoMes(conta.vencimento, referenceDate))
+    .filter((conta) => isMesmoMes(dataReferencia(conta), mesReferencia))
     .reduce((total, conta) => total + conta.valorLiquido, 0);
 
-  const resultadoRealizado = contasReceber
-    .filter((conta) => conta.situacao === 'liquidado')
-    .reduce((total, conta) => total + conta.valorLiquido, 0)
-    - contasPagar
-      .filter((conta) => conta.situacao === 'liquidado')
-      .reduce((total, conta) => total + conta.valorLiquido, 0);
+  const entradasRealizadas = somarLiquidados(contasReceber);
+  const saidasRealizadas = somarLiquidados(contasPagar);
+
+  // Meses já decorridos do ano (ou 1, quando um mês específico está filtrado).
+  const mesesConsiderados = mesFiltro
+    ? 1
+    : referenceDate.getFullYear() > ANO_VIGENTE
+      ? 12
+      : referenceDate.getFullYear() < ANO_VIGENTE
+        ? 1
+        : referenceDate.getMonth() + 1;
 
   return {
     saldoConsolidado: totalAReceber - totalAPagar,
     totalAReceber,
     totalAPagar,
     resultadoPrevisto: receitasDoMes - despesasDoMes,
-    resultadoRealizado,
+    resultadoRealizado: entradasRealizadas - saidasRealizadas,
     valoresVencidos: somarVencidos(contasPagar, referenceDate) + somarVencidos(contasReceber, referenceDate),
     vencimento7Dias: somarVencendoEm(contasPagar, referenceDate, 7) + somarVencendoEm(contasReceber, referenceDate, 7),
     vencimento30Dias: somarVencendoEm(contasPagar, referenceDate, 30) + somarVencendoEm(contasReceber, referenceDate, 30),
     receitasDoMes,
     despesasDoMes,
+    mediaMensalEntradas: entradasRealizadas / mesesConsiderados,
+    mediaMensalSaidas: saidasRealizadas / mesesConsiderados,
     ultimaSincronizacao,
   };
 }
@@ -113,10 +131,10 @@ export function calcularFluxoCaixaMensal(
   return meses.map((mes) => {
     const referencia = toLocalDate(mes);
     const receitas = contasReceber
-      .filter((conta) => isMesmoMes(conta.vencimento, referencia))
+      .filter((conta) => isMesmoMes(dataReferencia(conta), referencia))
       .reduce((total, conta) => total + conta.valorLiquido, 0);
     const despesas = contasPagar
-      .filter((conta) => isMesmoMes(conta.vencimento, referencia))
+      .filter((conta) => isMesmoMes(dataReferencia(conta), referencia))
       .reduce((total, conta) => total + conta.valorLiquido, 0);
     return { mes, receitas, despesas, saldo: receitas - despesas };
   });

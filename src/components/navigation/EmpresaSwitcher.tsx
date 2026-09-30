@@ -4,6 +4,7 @@ import { CNPJ_POR_EMPRESA, type NomeEmpresa } from '@/constants/empresas';
 import { useOpcoesFiltro, useResumoFinanceiro } from '@/hooks/useFinanceData';
 import { useFiltrosStore } from '@/stores/useFiltrosStore';
 import { formatBRL } from '@/utils/currency';
+import { MESES } from '@/utils/periodo';
 import { colors, radius, spacing, typography } from '@/theme';
 
 /**
@@ -15,6 +16,7 @@ export function EmpresaSwitcher() {
   const { data: opcoes } = useOpcoesFiltro();
   const { data: resumo } = useResumoFinanceiro();
   const empresaAtiva = useFiltrosStore((state) => state.filtros.empresa);
+  const mesFiltro = useFiltrosStore((state) => state.filtros.mes);
   const setFiltro = useFiltrosStore((state) => state.setFiltro);
 
   const empresas = opcoes?.empresas ?? [];
@@ -73,7 +75,8 @@ export function EmpresaSwitcher() {
 
       <View style={styles.faturamento}>
         <Text style={styles.faturamentoLabel}>
-          Faturamento mensal{consolidadoAtivo ? ' consolidado' : ` — ${empresaAtiva}`}
+          Faturamento {mesFiltro ? `de ${MESES[mesFiltro - 1].toLowerCase()}` : 'do mês'}
+          {consolidadoAtivo ? ' consolidado' : ` — ${empresaAtiva}`}
         </Text>
         <Text style={styles.faturamentoValor}>{resumo ? formatBRL(resumo.receitasDoMes) : '—'}</Text>
       </View>

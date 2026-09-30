@@ -1,6 +1,7 @@
 import { supabase } from './client';
 import { invocarFuncao } from './functions';
 import type { ContaFinanceira } from '@/types/finance';
+import { noPeriodo } from '@/utils/periodo';
 
 export type SituacaoContaReceberSheet = 'pendente' | 'paga' | 'cancelada';
 
@@ -78,12 +79,22 @@ export interface ResumoContasReceberSheets {
   quantidadeCancelado: number;
 }
 
-/** Os 3 totais separados por situação (pendente/pago/cancelado), incluindo os cancelados. */
-export async function resumoContasReceberSheets(): Promise<ResumoContasReceberSheets> {
-  const { data, error } = await supabase.from('contas_receber_sheets').select('valor, situacao');
+/**
+ * Os 3 totais separados por situação (pendente/pago/cancelado), incluindo os cancelados, na
+ * empresa e no período escolhidos (pagos pela data do pagamento; o resto pelo vencimento).
+ */
+export async function resumoContasReceberSheets(filtros: { empresa?: string; mes?: number }): Promise<ResumoContasReceberSheets> {
+  let query = supabase.from('contas_receber_sheets').select('valor, situacao, vencimento, dt_pagamento');
+  if (filtros.empresa) query = query.eq('empresa', filtros.empresa);
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  const linhas = data as { valor: number; situacao: SituacaoContaReceberSheet }[];
+  const linhas = (data as { valor: number; situacao: SituacaoContaReceberSheet; vencimento: string; dt_pagamento: string | null }[]).filter(
+    (l) =>
+      l.situacao === 'paga'
+        ? noPeriodo(l.dt_pagamento ?? l.vencimento, false, filtros.mes)
+        : noPeriodo(l.vencimento, l.situacao === 'pendente', filtros.mes)
+  );
   const somar = (situacao: SituacaoContaReceberSheet) =>
     linhas.filter((l) => l.situacao === situacao).reduce((total, l) => total + Number(l.valor), 0);
   const contar = (situacao: SituacaoContaReceberSheet) => linhas.filter((l) => l.situacao === situacao).length;

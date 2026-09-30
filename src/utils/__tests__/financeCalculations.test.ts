@@ -1,6 +1,7 @@
 import {
   agruparPorCategoria,
   agruparPorProjeto,
+  aplicarFiltros,
   calcularFluxoCaixaMensal,
   calcularResumoFinanceiro,
   somarEmAberto,
@@ -84,6 +85,45 @@ describe('calcularResumoFinanceiro', () => {
     expect(resumo.valoresVencidos).toBe(1000);
     expect(resumo.resultadoRealizado).toBe(1500 - 500); // recebido liquidado - pago liquidado
     expect(resumo.ultimaSincronizacao).toBe('2026-09-18T08:00:00Z');
+  });
+});
+
+describe('aplicarFiltros — período', () => {
+  const contas = [
+    conta({ id: 'pago-2026', situacao: 'liquidado', vencimento: '2025-12-20', dataLiquidacao: '2026-01-05' }),
+    conta({ id: 'pago-2025', situacao: 'liquidado', vencimento: '2025-11-10', dataLiquidacao: '2025-11-12' }),
+    conta({ id: 'atrasado-2025', situacao: 'vencido', vencimento: '2025-12-01' }),
+    conta({ id: 'aberto-marco', situacao: 'aberto', vencimento: '2026-03-15' }),
+    conta({ id: 'aberto-2027', situacao: 'aberto', vencimento: '2027-01-10' }),
+  ];
+  const ids = (lista: typeof contas) => lista.map((c) => c.id);
+
+  it('no ano todo: esconde histórico de anos anteriores, mas mantém atrasados em aberto', () => {
+    expect(ids(aplicarFiltros(contas, {}))).toEqual(['pago-2026', 'atrasado-2025', 'aberto-marco']);
+  });
+
+  it('pago conta pela data do pagamento, pendente pelo vencimento', () => {
+    expect(ids(aplicarFiltros(contas, { mes: 1 }))).toEqual(['pago-2026']);
+    expect(ids(aplicarFiltros(contas, { mes: 3 }))).toEqual(['aberto-marco']);
+  });
+});
+
+describe('calcularResumoFinanceiro — mês e médias', () => {
+  it('usa o mês filtrado nos KPIs de mês e divide a média pelos meses decorridos', () => {
+    const contasReceber = [
+      conta({ id: 'r1', tipo: 'receber', valorLiquido: 900, situacao: 'liquidado', vencimento: '2026-02-01', dataLiquidacao: '2026-03-02' }),
+      conta({ id: 'r2', tipo: 'receber', valorLiquido: 100, situacao: 'aberto', vencimento: '2026-03-20' }),
+    ];
+    const contasPagar = [conta({ id: 'p1', valorLiquido: 300, situacao: 'liquidado', vencimento: '2026-03-10', dataLiquidacao: '2026-03-10' })];
+
+    const marco = calcularResumoFinanceiro(contasPagar, contasReceber, HOJE, 'x', 3);
+    expect(marco.receitasDoMes).toBe(1000); // recebido em março (pela data do pagamento) + pendente de março
+    expect(marco.despesasDoMes).toBe(300);
+    expect(marco.mediaMensalEntradas).toBe(900);
+
+    const anoTodo = calcularResumoFinanceiro(contasPagar, contasReceber, HOJE, 'x');
+    expect(anoTodo.mediaMensalEntradas).toBe(100); // 900 em 9 meses (jan–set)
+    expect(anoTodo.mediaMensalSaidas).toBeCloseTo(300 / 9);
   });
 });
 

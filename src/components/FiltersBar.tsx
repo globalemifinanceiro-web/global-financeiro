@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { SelectField } from '@/components/ui/SelectField';
 import { useOpcoesFiltro } from '@/hooks/useFinanceData';
 import { useFiltrosStore } from '@/stores/useFiltrosStore';
+import { ANO_VIGENTE, MESES } from '@/utils/periodo';
 import { spacing } from '@/theme';
 
 export function FiltersBar() {
@@ -13,6 +14,16 @@ export function FiltersBar() {
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <SelectField
+        label="Mês"
+        value={filtros.mes ? MESES[filtros.mes - 1] : undefined}
+        options={[...MESES]}
+        onChange={(v) => {
+          const indice = MESES.findIndex((mes) => mes === v);
+          setFiltro('mes', indice >= 0 ? indice + 1 : undefined);
+        }}
+        placeholder={`Ano todo (${ANO_VIGENTE})`}
+      />
       <SelectField
         label="Projeto/Obra"
         value={filtros.projeto}

@@ -7,20 +7,13 @@ import {
   calcularFluxoCaixaMensal,
   calcularResumoFinanceiro,
 } from '@/utils/financeCalculations';
+import { mesesDoAno } from '@/utils/periodo';
 import { getDemoDataset } from './mockData';
 
 const SIMULATED_DELAY_MS = 350;
 
 function delay<T>(value: T): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), SIMULATED_DELAY_MS));
-}
-
-function ultimosMeses(quantidade: number): string[] {
-  const hoje = new Date();
-  return Array.from({ length: quantidade }, (_, index) => {
-    const data = new Date(hoje.getFullYear(), hoje.getMonth() - (quantidade - 1 - index), 1);
-    return data.toISOString().slice(0, 10);
-  });
 }
 
 export const demoDataSource: FinanceDataSource = {
@@ -30,7 +23,7 @@ export const demoDataSource: FinanceDataSource = {
     const dataset = getDemoDataset();
     const contasPagar = aplicarFiltros(dataset.contasPagar, filtros);
     const contasReceber = aplicarFiltros(dataset.contasReceber, filtros);
-    const resumo = calcularResumoFinanceiro(contasPagar, contasReceber, new Date(), new Date().toISOString());
+    const resumo = calcularResumoFinanceiro(contasPagar, contasReceber, new Date(), new Date().toISOString(), filtros.mes);
     return delay(resumo);
   },
 
@@ -46,9 +39,10 @@ export const demoDataSource: FinanceDataSource = {
 
   async getFluxoCaixaMensal(filtros) {
     const dataset = getDemoDataset();
-    const contasPagar = aplicarFiltros(dataset.contasPagar, filtros);
-    const contasReceber = aplicarFiltros(dataset.contasReceber, filtros);
-    return delay(calcularFluxoCaixaMensal(contasPagar, contasReceber, ultimosMeses(6)));
+    const anoTodo = { ...filtros, mes: undefined };
+    const contasPagar = aplicarFiltros(dataset.contasPagar, anoTodo);
+    const contasReceber = aplicarFiltros(dataset.contasReceber, anoTodo);
+    return delay(calcularFluxoCaixaMensal(contasPagar, contasReceber, mesesDoAno()));
   },
 
   async getDespesasPorCategoria(filtros) {

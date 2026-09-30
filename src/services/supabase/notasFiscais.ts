@@ -1,6 +1,7 @@
 import { supabase } from './client';
 import { invocarFuncao } from './functions';
 import type { NotaFiscal, NovaNotaFiscal, OrigemNF, SituacaoNF } from '@/types/notaFiscal';
+import { FIM_ANO, INICIO_ANO } from '@/utils/periodo';
 
 const BUCKET = 'notas-fiscais';
 
@@ -47,7 +48,12 @@ function paraNotaFiscal(row: NotaFiscalRow): NotaFiscal {
 }
 
 export async function listarNotasFiscais(empresa?: string): Promise<NotaFiscal[]> {
-  let query = supabase.from('notas_fiscais').select('*').order('vencimento', { ascending: true });
+  // Só o ano vigente — as pendentes aparecem sempre, mesmo de anos anteriores.
+  let query = supabase
+    .from('notas_fiscais')
+    .select('*')
+    .or(`situacao.eq.pendente,and(vencimento.gte.${INICIO_ANO},vencimento.lte.${FIM_ANO})`)
+    .order('vencimento', { ascending: true });
   if (empresa) query = query.eq('empresa', empresa);
   const { data, error } = await query;
   if (error) throw new Error(error.message);

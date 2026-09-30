@@ -8,17 +8,10 @@ import {
   calcularFluxoCaixaMensal,
   calcularResumoFinanceiro,
 } from '@/utils/financeCalculations';
+import { mesesDoAno } from '@/utils/periodo';
 
 function naoImplementado(metodo: string): never {
   throw new Error(`[Global Financeiro] Este painel (${metodo}) depende de uma integração ainda não implementada.`);
-}
-
-function ultimosMeses(quantidade: number): string[] {
-  const hoje = new Date();
-  return Array.from({ length: quantidade }, (_, index) => {
-    const data = new Date(hoje.getFullYear(), hoje.getMonth() - (quantidade - 1 - index), 1);
-    return data.toISOString().slice(0, 10);
-  });
 }
 
 // Contas a pagar ainda não têm fonte real (dependem de outra planilha/integração) — entram vazias
@@ -38,7 +31,8 @@ export const realDataSource: FinanceDataSource = {
       aplicarFiltros(contasPagar, filtros),
       aplicarFiltros(contasReceber, filtros),
       new Date(),
-      new Date().toISOString()
+      new Date().toISOString(),
+      filtros.mes
     );
   },
 
@@ -53,7 +47,8 @@ export const realDataSource: FinanceDataSource = {
 
   async getFluxoCaixaMensal(filtros) {
     const [contasPagar, contasReceber] = await Promise.all([contasPagarReal(), listarContasReceberSheets()]);
-    return calcularFluxoCaixaMensal(aplicarFiltros(contasPagar, filtros), aplicarFiltros(contasReceber, filtros), ultimosMeses(6));
+    const anoTodo = { ...filtros, mes: undefined };
+    return calcularFluxoCaixaMensal(aplicarFiltros(contasPagar, anoTodo), aplicarFiltros(contasReceber, anoTodo), mesesDoAno());
   },
 
   async getDespesasPorCategoria() {

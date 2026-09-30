@@ -1,6 +1,7 @@
 import { supabase } from './client';
 import { invocarFuncao } from './functions';
 import type { BaixaStatus, Conciliacao, NovoComprovante, ResultadoComprovante, TipoConciliacao, TituloPendente } from '@/types/conciliacao';
+import { FIM_ANO, INICIO_ANO } from '@/utils/periodo';
 
 interface ConciliacaoRow {
   id: string;
@@ -21,6 +22,8 @@ export async function listarConciliacoes(): Promise<Conciliacao[]> {
   const { data, error } = await supabase
     .from('conciliacoes')
     .select('id, tipo, empresa, data_pagamento, valor, descricao, arquivo_nome, drive_url, titulo_descricao, baixa_status, baixa_erro, created_at')
+    .gte('data_pagamento', INICIO_ANO)
+    .lte('data_pagamento', FIM_ANO)
     .order('data_pagamento', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
