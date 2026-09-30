@@ -54,8 +54,9 @@ export interface ResumoFinanceiro {
   vencimento30Dias: number;
   receitasDoMes: number;
   despesasDoMes: number;
-  /** Média por mês do que efetivamente entrou/saiu (títulos liquidados) no período. */
+  /** Média por mês do que efetivamente entrou (recebido), pelos meses já decorridos do período. */
   mediaMensalEntradas: number;
+  /** Média por mês das contas a pagar (pelo vencimento), só entre os meses que têm lançamentos. */
   mediaMensalSaidas: number;
   ultimaSincronizacao: string; // ISO datetime
 }

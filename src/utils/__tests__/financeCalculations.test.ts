@@ -123,7 +123,18 @@ describe('calcularResumoFinanceiro — mês e médias', () => {
 
     const anoTodo = calcularResumoFinanceiro(contasPagar, contasReceber, HOJE, 'x');
     expect(anoTodo.mediaMensalEntradas).toBe(100); // 900 em 9 meses (jan–set)
-    expect(anoTodo.mediaMensalSaidas).toBeCloseTo(300 / 9);
+    expect(anoTodo.mediaMensalSaidas).toBe(300); // só março tem contas a pagar
+  });
+
+  it('média de saídas conta as pendentes pelo vencimento e divide só pelos meses com planilha', () => {
+    const contasPagar = [
+      conta({ id: 'p1', valorLiquido: 1000, situacao: 'aberto', vencimento: '2026-10-05' }),
+      conta({ id: 'p2', valorLiquido: 500, situacao: 'aberto', vencimento: '2026-10-20' }),
+      conta({ id: 'p3', valorLiquido: 300, situacao: 'aberto', vencimento: '2026-11-10' }),
+      conta({ id: 'p4', valorLiquido: 9999, situacao: 'vencido', vencimento: '2025-12-01' }), // atrasada de 2025: fora da média de 2026
+    ];
+    const resumo = calcularResumoFinanceiro(contasPagar, [], HOJE, 'x');
+    expect(resumo.mediaMensalSaidas).toBe(900); // (1500 + 300) / 2 meses
   });
 });
 

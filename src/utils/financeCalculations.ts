@@ -96,7 +96,13 @@ export function calcularResumoFinanceiro(
   const entradasRealizadas = somarLiquidados(contasReceber);
   const saidasRealizadas = somarLiquidados(contasPagar);
 
-  // Meses já decorridos do ano (ou 1, quando um mês específico está filtrado).
+  // Saídas: as planilhas de contas a pagar não dizem o que foi pago, então tudo conta pelo mês de
+  // referência, e a média divide só pelos meses que já têm planilha (não pelo ano todo).
+  const saidasDoAno = contasPagar.filter((conta) => toLocalDate(dataReferencia(conta)).getFullYear() === ANO_VIGENTE);
+  const mesesComSaidas = new Set(saidasDoAno.map((conta) => dataReferencia(conta).slice(0, 7))).size;
+  const totalSaidas = saidasDoAno.reduce((total, conta) => total + conta.valorLiquido, 0);
+
+  // Entradas: só o que efetivamente entrou, pelos meses já decorridos do ano (ou 1, com mês filtrado).
   const mesesConsiderados = mesFiltro
     ? 1
     : referenceDate.getFullYear() > ANO_VIGENTE
@@ -117,7 +123,7 @@ export function calcularResumoFinanceiro(
     receitasDoMes,
     despesasDoMes,
     mediaMensalEntradas: entradasRealizadas / mesesConsiderados,
-    mediaMensalSaidas: saidasRealizadas / mesesConsiderados,
+    mediaMensalSaidas: mesesComSaidas > 0 ? totalSaidas / mesesComSaidas : 0,
     ultimaSincronizacao,
   };
 }
