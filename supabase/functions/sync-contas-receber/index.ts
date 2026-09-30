@@ -13,7 +13,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SPREADSHEET_ID = '12g27xoe8t2uM8vfq7YbmehObQs7rQIIC';
+const SPREADSHEET_ID = '10jVzX0nBgAP74YCVCxVQb8uDlfvFZtyLBaPxD2hIsZM';
 // B2:K — começa depois do cabeçalho (linha 1); colunas B..K = Empresa..Observação.
 const RANGE = "'à Receber'!B2:K";
 const SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly';
