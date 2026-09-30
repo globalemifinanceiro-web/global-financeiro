@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { VerDocumentosProjetos } from '@/components/solicitacoes/VerDocumentosProjetos';
 import { Badge } from '@/components/ui/Badge';
 import { urlAssinadaNotaFiscal } from '@/services/supabase/notasFiscais';
 import type { NotaFiscal } from '@/types/notaFiscal';
@@ -58,6 +59,8 @@ export function CentralPagamentoItem({ nota }: { nota: NotaFiscal }) {
           <Pressable onPress={abrirAnexo} disabled={abrindo}>
             <Text style={styles.link}>{abrindo ? 'Abrindo...' : 'Ver NF ›'}</Text>
           </Pressable>
+        ) : nota.origem === 'projetos_global' && nota.projetosGlobalRequestId ? (
+          <VerDocumentosProjetos solicitacaoId={nota.projetosGlobalRequestId} />
         ) : (
           <Text style={styles.semAnexo}>Sem anexo</Text>
         )}

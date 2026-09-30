@@ -5,6 +5,7 @@ import { formatBRL } from '@/utils/currency';
 import { formatDateTimeBR } from '@/utils/date';
 import { colors, radius, spacing, typography } from '@/theme';
 import { comQuemEsta, diasParado } from './comQuemEsta';
+import { VerDocumentosProjetos } from './VerDocumentosProjetos';
 
 export function SolicitacaoCard({ solicitacao: s, mostrarResponsavel }: { solicitacao: SolicitacaoProjetos; mostrarResponsavel: boolean }) {
   const [aberto, setAberto] = useState(false);
@@ -27,6 +28,10 @@ export function SolicitacaoCard({ solicitacao: s, mostrarResponsavel }: { solici
         </Text>
       ) : null}
       {s.lancadoPorNome ? <Text style={styles.meta}>Lançada por {s.lancadoPorNome}</Text> : null}
+      {/* Documentos só ficam disponíveis pela API depois de liberada ao Financeiro. */}
+      {s.situacao === 'liberado_financeiro' || s.situacao === 'pagamento_agendado' || s.situacao === 'pago' ? (
+        <VerDocumentosProjetos solicitacaoId={s.id} rotulo="Ver NF e anexos ›" />
+      ) : null}
 
       {aberto ? (
         <View style={styles.historico}>

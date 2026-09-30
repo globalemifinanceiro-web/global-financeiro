@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { VerDocumentosProjetos } from '@/components/solicitacoes/VerDocumentosProjetos';
 import { Badge } from '@/components/ui/Badge';
 import { useAtualizarSituacaoNotaFiscal, useExcluirNotaFiscal } from '@/hooks/useNotasFiscais';
 import { urlAssinadaNotaFiscal } from '@/services/supabase/notasFiscais';
@@ -75,6 +76,9 @@ export function NotaFiscalListItem({ nota }: { nota: NotaFiscal }) {
           <Text style={styles.meta}>
             Vem do Projetos Global{nota.projetoPcg ? ` · PCG ${nota.projetoPcg}` : ''} — pagamento é registrado lá
           </Text>
+        ) : null}
+        {nota.origem === 'projetos_global' && nota.projetosGlobalRequestId ? (
+          <VerDocumentosProjetos solicitacaoId={nota.projetosGlobalRequestId} />
         ) : null}
       </View>
 

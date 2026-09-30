@@ -22,6 +22,8 @@ export interface NotaFiscal {
   observacoes: string | null;
   createdAt: string;
   origem: OrigemNF;
+  /** Id da solicitação no Projetos Global (para buscar o documento assinado e os anexos). */
+  projetosGlobalRequestId: string | null;
   /** Status original da solicitação no Projetos Global (liberado_financeiro/pagamento_agendado/pago), quando vem de lá. */
   projetosGlobalStatus: string | null;
   projetoPcg: string | null;

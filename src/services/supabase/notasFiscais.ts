@@ -20,6 +20,7 @@ interface NotaFiscalRow {
   observacoes: string | null;
   created_at: string;
   origem: OrigemNF;
+  projetos_global_request_id: string | null;
   projetos_global_status: string | null;
   projeto_pcg: string | null;
   projeto_nome: string | null;
@@ -41,6 +42,7 @@ function paraNotaFiscal(row: NotaFiscalRow): NotaFiscal {
     observacoes: row.observacoes,
     createdAt: row.created_at,
     origem: row.origem,
+    projetosGlobalRequestId: row.projetos_global_request_id,
     projetosGlobalStatus: row.projetos_global_status,
     projetoPcg: row.projeto_pcg,
     projetoNome: row.projeto_nome,
