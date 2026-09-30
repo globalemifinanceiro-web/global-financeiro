@@ -1,9 +1,9 @@
 import type { FinanceDataSource } from '@/services/data/FinanceDataSource';
 
 /**
- * Implementação real: chamará as Supabase Edge Functions que fazem proxy da Omie e do Google
- * Sheets (nunca a Omie/Sheets diretamente do app). Ainda não implementada — isso será feito na
- * Etapa 2/3 do projeto, depois da aprovação do protótipo visual e da configuração das credenciais.
+ * Implementação real: chamará as Supabase Edge Functions que buscam custos/NFs/recibos do app
+ * Projetos Global e dados complementares do Google Sheets (nunca diretamente do app). Ainda não
+ * implementada — isso será feito quando a integração com o Projetos Global for construída.
  */
 function naoImplementado(metodo: string): never {
   throw new Error(

@@ -9,7 +9,7 @@ export function DemoBanner() {
   return (
     <View style={styles.banner}>
       <Ionicons name="information-circle" size={16} color={colors.navy} />
-      <Text style={styles.text}>Dados de demonstração — valores fictícios, não refletem a Omie ou o Google Sheets reais.</Text>
+      <Text style={styles.text}>Dados de demonstração — valores fictícios, não refletem o Projetos Global ou o Google Sheets reais.</Text>
     </View>
   );
 }

@@ -147,7 +147,7 @@ function gerarAlertas(contasPagar: ContaFinanceira[], contasReceber: ContaFinanc
   alertas.push({
     id: 'alerta-modo-demo',
     titulo: 'Ambiente em modo de demonstração',
-    descricao: 'Os valores exibidos são fictícios e não representam dados reais da Omie ou do Google Sheets.',
+    descricao: 'Os valores exibidos são fictícios e não representam dados reais do Projetos Global ou do Google Sheets.',
     severidade: 'info',
     data: new Date().toISOString(),
   });

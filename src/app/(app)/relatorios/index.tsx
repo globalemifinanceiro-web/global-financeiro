@@ -21,8 +21,8 @@ export default function RelatoriosScreen() {
       <Card style={styles.intro}>
         <Text style={styles.introTitle}>Relatório financeiro — Previsto x Realizado</Text>
         <Text style={styles.introText}>
-          Consolidado com os filtros selecionados acima. Exportação em PDF/planilha e relatórios adicionais (ex.:
-          ordens de serviço e contratos) entram em uma etapa futura, junto da integração real com a Omie.
+          Consolidado com os filtros selecionados acima. Exportação em PDF/planilha e relatórios adicionais entram
+          em uma etapa futura, junto da integração real com o Projetos Global.
         </Text>
       </Card>
 

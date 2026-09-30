@@ -16,7 +16,12 @@ interface IntegracaoInfo {
 }
 
 const INTEGRACOES: IntegracaoInfo[] = [
-  { id: 'omie', nome: 'Omie ERP', descricao: 'Contas a pagar/receber, extrato, clientes, fornecedores e mais.', icone: 'link-outline' },
+  {
+    id: 'projetos-global',
+    nome: 'Projetos Global (PWA)',
+    descricao: 'Custos, notas fiscais, recibos, fotos e documentos anexados nos projetos, para aprovação e pagamento.',
+    icone: 'link-outline',
+  },
   { id: 'sheets', nome: 'Google Sheets', descricao: 'Metas, orçamentos, projeções e indicadores complementares.', icone: 'grid-outline' },
 ];
 

@@ -14,9 +14,9 @@ const SECOES = [
     icone: 'people-outline' as const,
   },
   {
-    id: 'omie',
-    titulo: 'Integração com a Omie',
-    descricao: 'Status da conexão e configuração das credenciais — App Key/Secret ficam somente no backend, nunca aqui.',
+    id: 'projetos-global',
+    titulo: 'Integração com o Projetos Global',
+    descricao: 'Status da conexão com o app de gestão de projetos — de onde vêm custos, NFs, recibos e documentos para aprovação/pagamento.',
     icone: 'link-outline' as const,
   },
   {
@@ -43,7 +43,7 @@ export default function ConfiguracoesScreen() {
         <Badge label={dataMode === 'demo' ? 'Demonstração' : 'Real'} tone={dataMode === 'demo' ? 'warning' : 'positive'} />
         <Text style={styles.modoTexto}>
           Definido pela variável EXPO_PUBLIC_DATA_MODE. Trocar para &ldquo;real&rdquo; exige que o backend (Supabase +
-          Edge Functions da Omie/Sheets) já esteja configurado.
+          Edge Functions do Projetos Global/Sheets) já esteja configurado.
         </Text>
       </Card>
 

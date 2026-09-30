@@ -17,7 +17,7 @@ const monthFormatter = new Intl.DateTimeFormat('pt-BR', {
 });
 
 /**
- * Datas "somente data" (YYYY-MM-DD, como vencimentos vindos da Omie) não carregam fuso horário.
+ * Datas "somente data" (YYYY-MM-DD, como vencimentos vindos de integrações externas) não carregam fuso horário.
  * `new Date('2026-09-18')` é interpretado como UTC e pode "virar o dia" ao converter para o
  * horário local da máquina. Para essas, construímos a data manualmente no horário local.
  */
