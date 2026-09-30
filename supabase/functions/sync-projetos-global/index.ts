@@ -1,11 +1,9 @@
-// Busca, no Supabase do app Projetos Global, as solicitações já liberadas para o Financeiro
-// (liberado_financeiro / pagamento_agendado / pago) e grava/atualiza a "nota fiscal" correspondente
-// aqui no Financeiro. A empresa (CNPJ) nunca é definida por esta função — fica em branco até
-// alguém classificar na Central de Pagamentos (o Projetos Global não separa por empresa).
+// Busca, na API do Projetos Global, as notas fiscais já liberadas/pagas para o Financeiro e
+// grava/atualiza/remove a "nota fiscal" correspondente aqui. Quando a API já informa a empresa
+// (empresa.cnpj/nome), ela entra classificada direto; quando vem nula, fica na fila de
+// classificação da Central de Pagamentos.
 //
-// Segredos necessários (supabase secrets set, neste projeto):
-//   PROJETOS_GLOBAL_SUPABASE_URL, PROJETOS_GLOBAL_SUPABASE_ANON_KEY,
-//   PROJETOS_GLOBAL_SERVICE_EMAIL, PROJETOS_GLOBAL_SERVICE_PASSWORD
+// Segredo necessário (supabase secrets set, neste projeto): PROJETOS_GLOBAL_SYNC_TOKEN
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -14,7 +12,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const STATUS_LIBERADOS = ['liberado_financeiro', 'pagamento_agendado', 'pago'];
+const API_URL = 'https://projetos-global.netlify.app/api/integracao/financeiro/notas';
+
+// CNPJ (só dígitos) e nome (maiúsculo, sem acento) -> nome da empresa no Financeiro.
+const EMPRESA_POR_CNPJ: Record<string, string> = {
+  '27652481000176': 'Global Engenharia',
+  '45740203000152': 'Global Montagem',
+  '49413918000151': 'Global Serviço',
+};
+const EMPRESA_POR_NOME: Record<string, string> = {
+  ENGENHARIA: 'Global Engenharia',
+  MONTAGEM: 'Global Montagem',
+  SERVICO: 'Global Serviço',
+  SERVIÇO: 'Global Serviço',
+};
+
+function normalizarEmpresa(cnpj: string | null | undefined, nome: string | null | undefined): string | null {
+  const digitos = cnpj?.replace(/\D/g, '');
+  if (digitos && EMPRESA_POR_CNPJ[digitos]) return EMPRESA_POR_CNPJ[digitos];
+  const chaveNome = nome?.trim().toUpperCase();
+  if (chaveNome && EMPRESA_POR_NOME[chaveNome]) return EMPRESA_POR_NOME[chaveNome];
+  return null;
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -24,13 +43,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const pgUrl = Deno.env.get('PROJETOS_GLOBAL_SUPABASE_URL');
-    const pgAnonKey = Deno.env.get('PROJETOS_GLOBAL_SUPABASE_ANON_KEY');
-    const pgEmail = Deno.env.get('PROJETOS_GLOBAL_SERVICE_EMAIL');
-    const pgPassword = Deno.env.get('PROJETOS_GLOBAL_SERVICE_PASSWORD');
-    if (!pgUrl || !pgAnonKey || !pgEmail || !pgPassword) {
-      return json({ error: 'Integração com o Projetos Global não configurada (faltam segredos no backend).' }, 500);
-    }
+    const token = Deno.env.get('PROJETOS_GLOBAL_SYNC_TOKEN');
+    if (!token) return json({ error: 'Integração com o Projetos Global não configurada (falta o segredo no backend).' }, 500);
 
     // Cliente local: usa o token de quem chamou, respeitando as permissões normais do Financeiro.
     const local = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
@@ -39,55 +53,52 @@ Deno.serve(async (req) => {
     const { data: userData, error: userError } = await local.auth.getUser();
     if (userError || !userData?.user) return json({ error: 'Não autenticado.' }, 401);
 
-    // Cliente do Projetos Global: entra como a conta de serviço (perfil só "Financeiro" lá).
-    const remote = createClient(pgUrl, pgAnonKey);
-    const { error: authError } = await remote.auth.signInWithPassword({ email: pgEmail, password: pgPassword });
-    if (authError) return json({ error: `Falha ao autenticar no Projetos Global: ${authError.message}` }, 502);
+    const resposta = await fetch(API_URL, { headers: { Authorization: `Bearer ${token}` } });
+    if (!resposta.ok) {
+      return json({ error: `Falha ao consultar o Projetos Global (HTTP ${resposta.status}).` }, 502);
+    }
+    const corpo = await resposta.json();
+    const notas = Array.isArray(corpo?.notas) ? corpo.notas : [];
 
-    const { data: solicitacoes, error: queryError } = await remote
-      .from('purchase_requests')
-      .select(
-        `id, title, amount, status, updated_at,
-         suppliers ( name ),
-         projects ( pcg_number, scope_name ),
-         fiscal_documents ( number, due_date, issue_date, net_amount )`
-      )
-      .in('status', STATUS_LIBERADOS)
-      .is('deleted_at', null);
-    await remote.auth.signOut();
+    const linhas = notas.map((n: any) => ({
+      projetos_global_request_id: n.id,
+      origem: 'projetos_global',
+      cliente_ou_fornecedor: n.fornecedor?.nome ?? 'Fornecedor não informado',
+      numero_documento: n.documento?.numero ?? null,
+      valor: n.documento?.valor_liquido ?? n.documento?.valor,
+      vencimento: n.documento?.vencimento ?? new Date().toISOString().slice(0, 10),
+      forma_pagamento: n.documento?.forma_pagamento_texto ?? null,
+      situacao: n.situacao === 'pago' ? 'paga' : 'pendente',
+      projetos_global_status: n.situacao ?? null,
+      projeto_pcg: n.projeto?.pcg ?? null,
+      projeto_nome: null,
+      empresaApi: normalizarEmpresa(n.empresa?.cnpj, n.empresa?.nome) as string | null,
+    }));
 
-    if (queryError) return json({ error: `Falha ao consultar o Projetos Global: ${queryError.message}` }, 502);
-
-    const linhas = (solicitacoes ?? []).map((r: any) => {
-      const doc = Array.isArray(r.fiscal_documents) ? r.fiscal_documents[0] : r.fiscal_documents;
-      const projeto = Array.isArray(r.projects) ? r.projects[0] : r.projects;
-      const fornecedor = Array.isArray(r.suppliers) ? r.suppliers[0] : r.suppliers;
-      return {
-        projetos_global_request_id: r.id,
-        origem: 'projetos_global',
-        cliente_ou_fornecedor: fornecedor?.name ?? r.title,
-        numero_documento: doc?.number ?? null,
-        valor: doc?.net_amount ?? r.amount,
-        vencimento: doc?.due_date ?? doc?.issue_date ?? new Date().toISOString().slice(0, 10),
-        situacao: r.status === 'pago' ? 'paga' : 'pendente',
-        projetos_global_status: r.status,
-        projeto_pcg: projeto?.pcg_number ?? null,
-        projeto_nome: projeto?.scope_name ?? null,
-      };
-    });
-
-    // "empresa" fica de fora de propósito: no insert entra em branco, e no update o valor
-    // já classificado por alguém aqui no Financeiro não é sobrescrito.
+    // "empresa" fica de fora do upsert de propósito: no insert entra em branco, e no update uma
+    // classificação manual já feita aqui não é sobrescrita. Preenchemos a empresa que a API já
+    // manda resolvida (quando não nula) num segundo passo, só em cima do que ainda estiver em
+    // branco — a API nunca troca uma classificação humana já feita.
     if (linhas.length > 0) {
+      const paraUpsert = linhas.map(({ empresaApi: _e, ...resto }) => resto);
       const { error: upsertError } = await local
         .from('notas_fiscais')
-        .upsert(linhas, { onConflict: 'projetos_global_request_id' });
+        .upsert(paraUpsert, { onConflict: 'projetos_global_request_id' });
       if (upsertError) return json({ error: `Falha ao gravar localmente: ${upsertError.message}` }, 500);
+
+      for (const linha of linhas) {
+        if (!linha.empresaApi) continue;
+        const { error: classificaError } = await local
+          .from('notas_fiscais')
+          .update({ empresa: linha.empresaApi })
+          .eq('projetos_global_request_id', linha.projetos_global_request_id)
+          .is('empresa', null);
+        if (classificaError) return json({ error: `Falha ao classificar empresa: ${classificaError.message}` }, 500);
+      }
     }
 
-    // Reconciliação: remove daqui o que não está mais liberado/pago no Projetos Global
-    // (foi excluído, cancelado ou voltou para uma etapa anterior de aprovação).
-    const idsAtivos = linhas.map((l) => l.projetos_global_request_id);
+    // Reconciliação: remove daqui o que não está mais liberado/pago no Projetos Global.
+    const idsAtivos = linhas.map((l: { projetos_global_request_id: string }) => l.projetos_global_request_id);
     let removida = local.from('notas_fiscais').delete({ count: 'exact' }).eq('origem', 'projetos_global');
     if (idsAtivos.length > 0) removida = removida.not('projetos_global_request_id', 'in', `(${idsAtivos.join(',')})`);
     const { error: deleteError, count } = await removida;
