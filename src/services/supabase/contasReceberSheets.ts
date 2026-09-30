@@ -1,5 +1,6 @@
 import { supabase } from './client';
 import { invocarFuncao } from './functions';
+import { selecionarTodas } from './paginacao';
 import type { ContaFinanceira } from '@/types/finance';
 import { noPeriodo } from '@/utils/periodo';
 
@@ -52,16 +53,19 @@ function paraContaFinanceira(row: ContaReceberSheetDbRow): ContaFinanceira {
  * no resumo dedicado (`resumoContasReceberSheets`), não nas listas/KPIs de títulos em aberto.
  */
 export async function listarContasReceberSheets(): Promise<ContaFinanceira[]> {
-  const { data, error } = await supabase
-    .from('contas_receber_sheets')
-    .select('id, cliente, empresa, numero_documento, tipo_documento, vencimento, valor, dt_pagamento, situacao')
-    .neq('situacao', 'cancelada')
-    .order('vencimento', { ascending: true });
-  if (error) throw new Error(error.message);
+  const linhas = await selecionarTodas<ContaReceberSheetDbRow>((de, ate) =>
+    supabase
+      .from('contas_receber_sheets')
+      .select('id, cliente, empresa, numero_documento, tipo_documento, vencimento, valor, dt_pagamento, situacao')
+      .neq('situacao', 'cancelada')
+      .order('vencimento', { ascending: true })
+      .order('linha_planilha', { ascending: true })
+      .range(de, ate)
+  );
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
-  return (data as ContaReceberSheetDbRow[]).map((row) => {
+  return linhas.map((row) => {
     const conta = paraContaFinanceira(row);
     if (conta.situacao !== 'liquidado' && new Date(conta.vencimento + 'T00:00:00') < hoje) {
       conta.situacao = 'vencido';
@@ -84,12 +88,15 @@ export interface ResumoContasReceberSheets {
  * empresa e no período escolhidos (pagos pela data do pagamento; o resto pelo vencimento).
  */
 export async function resumoContasReceberSheets(filtros: { empresa?: string; mes?: number }): Promise<ResumoContasReceberSheets> {
-  let query = supabase.from('contas_receber_sheets').select('valor, situacao, vencimento, dt_pagamento');
-  if (filtros.empresa) query = query.eq('empresa', filtros.empresa);
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  const todas = await selecionarTodas<{ valor: number; situacao: SituacaoContaReceberSheet; vencimento: string; dt_pagamento: string | null }>(
+    (de, ate) => {
+      let query = supabase.from('contas_receber_sheets').select('valor, situacao, vencimento, dt_pagamento');
+      if (filtros.empresa) query = query.eq('empresa', filtros.empresa);
+      return query.order('linha_planilha', { ascending: true }).range(de, ate);
+    }
+  );
 
-  const linhas = (data as { valor: number; situacao: SituacaoContaReceberSheet; vencimento: string; dt_pagamento: string | null }[]).filter(
+  const linhas = todas.filter(
     (l) =>
       l.situacao === 'paga'
         ? noPeriodo(l.dt_pagamento ?? l.vencimento, false, filtros.mes)
@@ -113,13 +120,18 @@ export async function resumoContasReceberSheets(filtros: { empresa?: string; mes
 export async function listarPendentesParaCobranca(): Promise<
   { id: string; clienteOuFornecedor: string; vencimento: string; valor: number; situacao: 'pendente' }[]
 > {
-  const { data, error } = await supabase
-    .from('contas_receber_sheets')
-    .select('id, cliente, vencimento, valor')
-    .eq('situacao', 'pendente');
-  if (error) throw new Error(error.message);
-  return (data as { id: string; cliente: string; vencimento: string; valor: number }[]).map((row) => ({
-    id: row.id,
+  const linhas = await selecionarTodas<{ linha_planilha: number; cliente: string; vencimento: string; valor: number }>((de, ate) =>
+    supabase
+      .from('contas_receber_sheets')
+      .select('linha_planilha, cliente, vencimento, valor')
+      .eq('situacao', 'pendente')
+      .order('linha_planilha', { ascending: true })
+      .range(de, ate)
+  );
+  return linhas.map((row) => ({
+    // Os ids da tabela mudam a cada sincronização (ela é recriada); a chave do "já avisei hoje"
+    // precisa ser estável, senão o pop-up volta a disparar para tudo depois de cada sincronização.
+    id: `${row.cliente}|${row.vencimento}|${row.valor}`,
     clienteOuFornecedor: row.cliente,
     vencimento: row.vencimento,
     valor: Number(row.valor),

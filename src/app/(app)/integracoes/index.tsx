@@ -48,13 +48,14 @@ const INTEGRACOES: IntegracaoInfo[] = [
       'Cada comprovante enviado na Conciliação é salvo nessa pasta. Quando vinculado a uma conta a receber, a data também é gravada na coluna DT PGTO da planilha.',
   },
   {
-    id: 'sheets-pagar',
-    nome: 'Google Sheets — Contas a Pagar',
-    descricao: 'Planilha de contas a pagar.',
-    icone: 'grid-outline',
-    status: 'Não configurado',
-    tone: 'negative',
-    detalhe: 'Contas a Pagar, Despesas por categoria e o lado de despesas do Fluxo de Caixa dependem desta integração.',
+    id: 'planilha-pagar',
+    nome: 'Planilhas de Contas a Pagar',
+    descricao: 'Planilha mensal de cada CNPJ, anexada na tela Contas a Pagar.',
+    icone: 'cloud-upload-outline',
+    status: 'Importação manual',
+    tone: 'info',
+    detalhe:
+      'Uma vez por mês, arraste a planilha de cada CNPJ em Contas a Pagar. Só visual: alimenta Dashboard, Despesas por categoria e Fluxo de Caixa, sem disparar pagamentos.',
   },
 ];
 

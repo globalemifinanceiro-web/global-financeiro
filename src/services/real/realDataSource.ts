@@ -1,8 +1,10 @@
+import { EMPRESAS } from '@/constants/empresas';
 import type { FinanceDataSource } from '@/services/data/FinanceDataSource';
+import { listarContasPagarPlanilhas } from '@/services/supabase/contasPagarPlanilhas';
 import { listarContasReceberSheets } from '@/services/supabase/contasReceberSheets';
-import type { ContaFinanceira } from '@/types/finance';
 import { toLocalDate } from '@/utils/date';
 import {
+  agruparPorCategoria,
   agruparPorProjeto,
   aplicarFiltros,
   calcularFluxoCaixaMensal,
@@ -10,23 +12,16 @@ import {
 } from '@/utils/financeCalculations';
 import { mesesDoAno } from '@/utils/periodo';
 
-function naoImplementado(metodo: string): never {
-  throw new Error(`[Global Financeiro] Este painel (${metodo}) depende de uma integração ainda não implementada.`);
-}
-
-// Contas a pagar ainda não têm fonte real (dependem de outra planilha/integração) — entram vazias
-// por enquanto, então os KPIs combinados (resumo, fluxo de caixa) já funcionam com o lado real do
-// que existe (contas a receber) sem travar em erro, e passam a refletir os dois lados assim que a
-// próxima integração for ligada aqui.
-async function contasPagarReal(): Promise<ContaFinanceira[]> {
-  return [];
+// Contas a pagar vêm das planilhas mensais importadas no app; contas a receber, do Google Sheets.
+function carregarAmbas() {
+  return Promise.all([listarContasPagarPlanilhas(), listarContasReceberSheets()]);
 }
 
 export const realDataSource: FinanceDataSource = {
   modo: 'real',
 
   async getResumo(filtros) {
-    const [contasPagar, contasReceber] = await Promise.all([contasPagarReal(), listarContasReceberSheets()]);
+    const [contasPagar, contasReceber] = await carregarAmbas();
     return calcularResumoFinanceiro(
       aplicarFiltros(contasPagar, filtros),
       aplicarFiltros(contasReceber, filtros),
@@ -36,33 +31,32 @@ export const realDataSource: FinanceDataSource = {
     );
   },
 
-  async getContasPagar() {
-    return naoImplementado('Contas a Pagar');
+  async getContasPagar(filtros) {
+    return aplicarFiltros(await listarContasPagarPlanilhas(), filtros);
   },
 
   async getContasReceber(filtros) {
-    const contasReceber = await listarContasReceberSheets();
-    return aplicarFiltros(contasReceber, filtros);
+    return aplicarFiltros(await listarContasReceberSheets(), filtros);
   },
 
   async getFluxoCaixaMensal(filtros) {
-    const [contasPagar, contasReceber] = await Promise.all([contasPagarReal(), listarContasReceberSheets()]);
+    const [contasPagar, contasReceber] = await carregarAmbas();
     const anoTodo = { ...filtros, mes: undefined };
     return calcularFluxoCaixaMensal(aplicarFiltros(contasPagar, anoTodo), aplicarFiltros(contasReceber, anoTodo), mesesDoAno());
   },
 
-  async getDespesasPorCategoria() {
-    return naoImplementado('Despesas por categoria');
+  async getDespesasPorCategoria(filtros) {
+    return agruparPorCategoria(aplicarFiltros(await listarContasPagarPlanilhas(), filtros));
   },
 
   async getResultadoPorProjeto(filtros) {
-    const [contasPagar, contasReceber] = await Promise.all([contasPagarReal(), listarContasReceberSheets()]);
+    const [contasPagar, contasReceber] = await carregarAmbas();
     return agruparPorProjeto(aplicarFiltros(contasPagar, filtros), aplicarFiltros(contasReceber, filtros));
   },
 
   async getProximosVencimentos(filtros) {
-    const contasReceber = await listarContasReceberSheets();
-    const abertas = aplicarFiltros(contasReceber, filtros).filter((conta) => conta.situacao === 'aberto');
+    const [contasPagar, contasReceber] = await carregarAmbas();
+    const abertas = aplicarFiltros([...contasPagar, ...contasReceber], filtros).filter((conta) => conta.situacao === 'aberto');
     return abertas.sort((a, b) => toLocalDate(a.vencimento).getTime() - toLocalDate(b.vencimento).getTime()).slice(0, 10);
   },
 
@@ -71,16 +65,18 @@ export const realDataSource: FinanceDataSource = {
   },
 
   async getOpcoesFiltro(filtros) {
-    const contasReceber = await listarContasReceberSheets();
-    const filtradas = filtros.empresa ? contasReceber.filter((c) => c.empresa === filtros.empresa) : contasReceber;
-    const unico = (valores: string[]) => Array.from(new Set(valores)).filter(Boolean);
+    const [contasPagar, contasReceber] = await carregarAmbas();
+    const daEmpresa = (contas: typeof contasPagar) => (filtros.empresa ? contas.filter((c) => c.empresa === filtros.empresa) : contas);
+    const pagar = daEmpresa(contasPagar);
+    const receber = daEmpresa(contasReceber);
+    const unico = (valores: string[]) => Array.from(new Set(valores)).filter(Boolean).sort();
     return {
-      empresas: unico(contasReceber.map((c) => c.empresa)),
-      projetos: [],
-      clientes: unico(filtradas.map((c) => c.clienteOuFornecedor)),
-      fornecedores: [],
-      categorias: unico(filtradas.map((c) => c.categoria)),
-      departamentos: [],
+      empresas: [...EMPRESAS],
+      projetos: unico([...pagar, ...receber].map((c) => c.projeto)),
+      clientes: unico(receber.map((c) => c.clienteOuFornecedor)),
+      fornecedores: unico(pagar.map((c) => c.clienteOuFornecedor)),
+      categorias: unico([...pagar, ...receber].map((c) => c.categoria)),
+      departamentos: unico(pagar.map((c) => c.departamento)),
       contasCorrentes: [],
     };
   },
