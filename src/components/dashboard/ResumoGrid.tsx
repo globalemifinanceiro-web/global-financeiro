@@ -20,7 +20,7 @@ export function ResumoGrid({ resumo }: { resumo: ResumoFinanceiro }) {
         icon="wallet-outline"
       />
       <KpiCard label="Total a receber" value={formatBRL(resumo.totalAReceber)} tone="info" icon="arrow-down-circle-outline" />
-      <KpiCard label="Total a pagar" value={formatBRL(resumo.totalAPagar)} tone="warning" icon="arrow-up-circle-outline" />
+      <KpiCard label="Total a pagar (Mensal)" value={formatBRL(resumo.totalAPagar)} tone="warning" icon="arrow-up-circle-outline" />
       <KpiCard
         label={`Resultado previsto (${doMes})`}
         value={formatBRL(resumo.resultadoPrevisto)}
