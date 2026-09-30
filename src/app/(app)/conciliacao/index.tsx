@@ -16,7 +16,7 @@ function mensagemResultado(resultado: ResultadoComprovante): { texto: string; er
     case 'ok':
       return { texto: 'Comprovante salvo no Drive e baixa realizada.', erro: false };
     case 'pendente_origem':
-      return { texto: 'Comprovante salvo e vinculado. Essa nota vem do Projetos Global — a baixa precisa ser feita lá.', erro: false };
+      return { texto: `Comprovante salvo e vinculado. ${resultado.baixaErro ?? 'O pagamento ainda não foi registrado no Projetos Global.'}`, erro: false };
     case 'erro':
       return { texto: `Comprovante salvo no Drive, mas a baixa falhou: ${resultado.baixaErro ?? 'erro desconhecido'}`, erro: true };
     default:

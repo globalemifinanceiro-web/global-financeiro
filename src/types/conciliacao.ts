@@ -1,6 +1,6 @@
 export type TipoConciliacao = 'recebimento' | 'pagamento';
 
-/** sem_vinculo | ok (título marcado como pago) | pendente_origem (baixa tem que ser feita no Projetos Global) | erro */
+/** sem_vinculo | ok (título marcado como pago) | pendente_origem (Projetos Global ainda não recebeu o pagamento) | erro */
 export type BaixaStatus = 'sem_vinculo' | 'ok' | 'pendente_origem' | 'erro';
 
 export interface Conciliacao {
@@ -29,7 +29,7 @@ export interface TituloPendente {
   descricao: string;
   valor: number;
   vencimento: string;
-  /** Nota vinda do Projetos Global: o comprovante é vinculado, mas a baixa acontece lá. */
+  /** Nota vinda do Projetos Global: o pagamento também é registrado lá, pela rota de pagamentos. */
   baixaNaOrigem: boolean;
 }
 

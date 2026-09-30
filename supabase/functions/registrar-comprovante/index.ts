@@ -3,9 +3,10 @@
 // a conciliação e, quando vinculado a um título, dá a baixa:
 //   - conta a receber: grava a data na coluna I (DT PGTO) da planilha e marca como paga aqui;
 //   - nota fiscal manual: marca como paga aqui;
-//   - nota fiscal do Projetos Global: só vincula (a baixa tem que acontecer lá).
+//   - nota fiscal do Projetos Global: registra o pagamento lá (rota /api/integracao/financeiro/pagamentos,
+//     com o comprovante) e, quando a solicitação fica paga, marca como paga aqui também.
 //
-// Segredos: GOOGLE_SERVICE_ACCOUNT_JSON, APPS_SCRIPT_URL, APPS_SCRIPT_TOKEN
+// Segredos: GOOGLE_SERVICE_ACCOUNT_JSON, APPS_SCRIPT_URL, APPS_SCRIPT_TOKEN, PROJETOS_GLOBAL_SYNC_TOKEN
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
@@ -22,7 +23,10 @@ const corsHeaders = {
 };
 
 const TAMANHO_MAXIMO_BYTES = 10 * 1024 * 1024;
+// O Projetos roda no Netlify, que recusa requisições acima de ~6 MB; em base64 o arquivo cresce ~1/3.
+const TAMANHO_MAXIMO_PROJETOS_BYTES = 4 * 1024 * 1024;
 const DATA_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const PAGAMENTOS_URL = 'https://projetos-global.netlify.app/api/integracao/financeiro/pagamentos';
 
 type Vinculo = { tipo: 'conta_receber'; linhaPlanilha: number } | { tipo: 'nota_fiscal'; id: string };
 
@@ -60,6 +64,46 @@ function validar(entrada: Entrada) {
   const v = entrada.vinculo;
   if (v?.tipo === 'conta_receber' && entrada.tipo !== 'recebimento') throw new ErroEntrada('Conta a receber só se vincula a recebimento.');
   if (v?.tipo === 'nota_fiscal' && entrada.tipo !== 'pagamento') throw new ErroEntrada('Nota fiscal só se vincula a pagamento.');
+}
+
+/** Registra o pagamento no Projetos Global. `null` = a rota ainda não foi publicada lá. */
+async function registrarPagamentoNoProjetos(dados: {
+  solicitacaoId: string;
+  dataPagamento: string;
+  valor: number;
+  formaPagamento: string | null;
+  observacao: string | null;
+  arquivo: { nome: string; mimeType: string; base64: string };
+}): Promise<{ situacao: string } | null> {
+  const token = Deno.env.get('PROJETOS_GLOBAL_SYNC_TOKEN');
+  if (!token) throw new Error('Integração com o Projetos Global não configurada (falta o segredo no backend).');
+
+  const resposta = await fetch(PAGAMENTOS_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      solicitacao_id: dados.solicitacaoId,
+      data_pagamento: dados.dataPagamento,
+      valor: dados.valor,
+      forma_pagamento: dados.formaPagamento,
+      observacao: dados.observacao,
+      comprovante: { nome: dados.arquivo.nome, mime: dados.arquivo.mimeType, base64: dados.arquivo.base64 },
+    }),
+  });
+
+  const texto = await resposta.text();
+  let corpo: { ok?: boolean; situacao?: string; erro?: string; error?: string } | null = null;
+  try {
+    corpo = JSON.parse(texto);
+  } catch {
+    corpo = null;
+  }
+  // 404 sem JSON = a rota não existe (página padrão do Next.js); 404 com JSON = recusa da própria rota.
+  if (resposta.status === 404 && !corpo) return null;
+  if (!resposta.ok || !corpo?.ok) {
+    throw new Error(`O Projetos Global recusou o pagamento: ${corpo?.erro ?? corpo?.error ?? `HTTP ${resposta.status}`}`);
+  }
+  return { situacao: corpo.situacao ?? '' };
 }
 
 async function enviarParaDrive(nome: string, mimeType: string, base64: string): Promise<{ id: string; url: string }> {
@@ -101,7 +145,7 @@ Deno.serve(async (req) => {
     let tituloDescricao: string | null = null;
     let googleToken: string | null = null;
     let contaReceber: { linha_planilha: number; cliente: string; valor: number } | null = null;
-    let notaFiscal: { id: string; origem: string } | null = null;
+    let notaFiscal: { id: string; origem: string; requestId: string | null; formaPagamento: string | null } | null = null;
 
     // 1) Confere o título ANTES de subir o arquivo, pra não deixar comprovante órfão no Drive.
     if (entrada.vinculo?.tipo === 'conta_receber') {
@@ -140,14 +184,22 @@ Deno.serve(async (req) => {
     } else if (entrada.vinculo?.tipo === 'nota_fiscal') {
       const { data, error } = await local
         .from('notas_fiscais')
-        .select('id, origem, situacao, empresa, cliente_ou_fornecedor, numero_documento')
+        .select('id, origem, situacao, empresa, cliente_ou_fornecedor, numero_documento, projetos_global_request_id, forma_pagamento')
         .eq('id', entrada.vinculo.id)
         .maybeSingle();
       if (error) throw new Error(error.message);
       if (!data) throw new ErroEntrada('Nota fiscal não encontrada.', 409);
       if (data.situacao !== 'pendente') throw new ErroEntrada('Essa nota fiscal não está mais pendente.', 409);
+      if (data.origem === 'projetos_global' && (entrada.arquivo.base64.length * 3) / 4 > TAMANHO_MAXIMO_PROJETOS_BYTES) {
+        throw new ErroEntrada('Para NF do Projetos Global o comprovante pode ter no máximo 4 MB (limite do Projetos). Reduza o arquivo e tente de novo.');
+      }
 
-      notaFiscal = { id: data.id, origem: data.origem };
+      notaFiscal = {
+        id: data.id,
+        origem: data.origem,
+        requestId: data.projetos_global_request_id,
+        formaPagamento: data.forma_pagamento,
+      };
       empresa = empresa ?? data.empresa;
       tituloDescricao = [data.cliente_ou_fornecedor, data.numero_documento ? `NF ${data.numero_documento}` : null].filter(Boolean).join(' · ');
     }
@@ -185,8 +237,31 @@ Deno.serve(async (req) => {
             .eq('id', notaFiscal.id);
           if (error) throw new Error(`Falha ao marcar a nota como paga: ${error.message}`);
           baixaStatus = 'ok';
+        } else if (!notaFiscal.requestId) {
+          throw new Error('A nota não tem o número da solicitação do Projetos Global — sincronize e tente de novo.');
         } else {
-          baixaStatus = 'pendente_origem';
+          const registro = await registrarPagamentoNoProjetos({
+            solicitacaoId: notaFiscal.requestId,
+            dataPagamento: entrada.dataPagamento,
+            valor: entrada.valor,
+            formaPagamento: notaFiscal.formaPagamento,
+            observacao: entrada.descricao?.trim() || null,
+            arquivo: entrada.arquivo,
+          });
+          if (!registro) {
+            baixaStatus = 'pendente_origem';
+            baixaErro = 'O Projetos Global ainda não publicou a rota de pagamentos — o comprovante ficou vinculado aqui.';
+          } else {
+            // Pagamento parcial mantém a nota pendente; só quando o Projetos fecha como "pago" ela vira paga aqui.
+            if (registro.situacao === 'pago') {
+              const { error } = await local
+                .from('notas_fiscais')
+                .update({ situacao: 'paga', projetos_global_status: 'pago', updated_at: new Date().toISOString() })
+                .eq('id', notaFiscal.id);
+              if (error) throw new Error(`Pagamento registrado no Projetos, mas falhou ao atualizar o app: ${error.message}`);
+            }
+            baixaStatus = 'ok';
+          }
         }
       }
     } catch (e) {

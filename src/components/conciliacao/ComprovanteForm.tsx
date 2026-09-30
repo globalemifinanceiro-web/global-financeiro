@@ -176,7 +176,7 @@ export function ComprovanteForm({
             {tituloSelecionado ? (
               <Text style={styles.nota}>
                 {tituloSelecionado.baixaNaOrigem
-                  ? 'Essa nota vem do Projetos Global: o comprovante fica vinculado, mas a baixa precisa ser feita lá.'
+                  ? 'Essa nota vem do Projetos Global: ao salvar, o pagamento e o comprovante também são registrados lá (comprovante de até 4 MB).'
                   : tipo === 'recebimento'
                     ? 'Ao salvar, a data vai para a coluna DT PGTO da planilha e o título passa a constar como recebido.'
                     : 'Ao salvar, a nota fiscal passa a constar como paga.'}

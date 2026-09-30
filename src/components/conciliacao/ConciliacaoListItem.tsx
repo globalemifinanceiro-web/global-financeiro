@@ -8,7 +8,7 @@ import { colors, spacing, typography, type StatusTone } from '@/theme';
 const BAIXA_LABEL: Record<BaixaStatus, string> = {
   ok: 'Baixa feita',
   sem_vinculo: 'Sem vínculo',
-  pendente_origem: 'Baixar no Projetos',
+  pendente_origem: 'Aguardando Projetos',
   erro: 'Baixa falhou',
 };
 
