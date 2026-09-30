@@ -11,15 +11,16 @@ export async function invocarFuncao<T>(nome: string, body?: Record<string, unkno
   const { data, error } = await supabase.functions.invoke(nome, body ? { body } : undefined);
 
   if (error) {
+    let mensagem = error.message;
     if (error instanceof FunctionsHttpError) {
       try {
         const corpo = await error.context.json();
-        throw new Error(corpo?.error ?? error.message);
+        if (corpo?.error) mensagem = corpo.error;
       } catch {
-        throw new Error(error.message);
+        // corpo não era JSON — fica a mensagem padrão
       }
     }
-    throw new Error(error.message);
+    throw new Error(mensagem);
   }
 
   if (data?.error) throw new Error(data.error);
