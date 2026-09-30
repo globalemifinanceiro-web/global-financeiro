@@ -2,6 +2,7 @@ import { usePathname } from 'expo-router';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { AlertaVencimentoModal } from '@/components/notasFiscais/AlertaVencimentoModal';
+import { AlertaSolicitacaoModal } from '@/components/solicitacoes/AlertaSolicitacaoModal';
 import { BottomTabBar } from './BottomTabBar';
 import { EmpresaSwitcher } from './EmpresaSwitcher';
 import { Sidebar } from './Sidebar';
@@ -9,6 +10,7 @@ import { TopBar } from './TopBar';
 import { NAV_ITEMS } from '@/constants/navigation';
 import { useAlertaCobranca } from '@/hooks/useAlertaCobranca';
 import { useAlertaVencimentoNF } from '@/hooks/useAlertaVencimentoNF';
+import { useAlertaSolicitacoes } from '@/hooks/useSolicitacoesProjetos';
 import { breakpoints, colors, spacing } from '@/theme';
 
 const TITULOS_EXTRA: Record<string, string> = {
@@ -31,9 +33,12 @@ export function AppShell({ children }: AppShellProps) {
   // for dispensado, pra não empilhar dois modais ao mesmo tempo.
   const { paraAlertar, dispensar } = useAlertaVencimentoNF();
   const { paraAlertar: paraCobrar, dispensar: dispensarCobranca } = useAlertaCobranca();
+  const { paraAlertar: solicitacoesNovas, dispensar: dispensarSolicitacoes } = useAlertaSolicitacoes();
   const alertaModal =
     paraAlertar.length > 0 ? (
       <AlertaVencimentoModal notas={paraAlertar} onFechar={dispensar} />
+    ) : solicitacoesNovas.length > 0 ? (
+      <AlertaSolicitacaoModal solicitacoes={solicitacoesNovas} onFechar={dispensarSolicitacoes} />
     ) : (
       <AlertaVencimentoModal notas={paraCobrar} onFechar={dispensarCobranca} titulo="Clientes com cobrança pendente" />
     );

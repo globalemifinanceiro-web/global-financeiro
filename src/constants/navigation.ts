@@ -15,6 +15,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'notas-fiscais', label: 'Notas Fiscais', href: '/notas-fiscais', icon: 'receipt-outline' },
   { id: 'central-pagamentos', label: 'Central de Pagamentos', href: '/central-pagamentos', icon: 'card-outline' },
   { id: 'conciliacao', label: 'Conciliação', href: '/conciliacao', icon: 'checkmark-done-outline' },
+  { id: 'acompanhamento', label: 'Acompanhamento', href: '/acompanhamento', icon: 'git-network-outline' },
   { id: 'fluxo-de-caixa', label: 'Fluxo de Caixa', href: '/fluxo-de-caixa', icon: 'trending-up-outline' },
   { id: 'projetos', label: 'Projetos e Obras', href: '/projetos', icon: 'business-outline' },
   { id: 'relatorios', label: 'Relatórios', href: '/relatorios', icon: 'document-text-outline' },

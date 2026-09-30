@@ -6,6 +6,7 @@
 // Segredo necessário (supabase secrets set, neste projeto): PROJETOS_GLOBAL_SYNC_TOKEN
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { empresaDoProjetos } from '../_shared/empresas.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,27 +14,6 @@ const corsHeaders = {
 };
 
 const API_URL = 'https://projetos-global.netlify.app/api/integracao/financeiro/notas';
-
-// CNPJ (só dígitos) e nome (maiúsculo, sem acento) -> nome da empresa no Financeiro.
-const EMPRESA_POR_CNPJ: Record<string, string> = {
-  '27652481000176': 'Global Engenharia',
-  '45740203000152': 'Global Montagem',
-  '49413918000151': 'Global Serviço',
-};
-const EMPRESA_POR_NOME: Record<string, string> = {
-  ENGENHARIA: 'Global Engenharia',
-  MONTAGEM: 'Global Montagem',
-  SERVICO: 'Global Serviço',
-  SERVIÇO: 'Global Serviço',
-};
-
-function normalizarEmpresa(cnpj: string | null | undefined, nome: string | null | undefined): string | null {
-  const digitos = cnpj?.replace(/\D/g, '');
-  if (digitos && EMPRESA_POR_CNPJ[digitos]) return EMPRESA_POR_CNPJ[digitos];
-  const chaveNome = nome?.trim().toUpperCase();
-  if (chaveNome && EMPRESA_POR_NOME[chaveNome]) return EMPRESA_POR_NOME[chaveNome];
-  return null;
-}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -72,7 +52,7 @@ Deno.serve(async (req) => {
       projetos_global_status: n.situacao ?? null,
       projeto_pcg: n.projeto?.pcg ?? null,
       projeto_nome: null,
-      empresaApi: normalizarEmpresa(n.empresa?.cnpj, n.empresa?.nome) as string | null,
+      empresaApi: empresaDoProjetos(n.empresa?.cnpj, n.empresa?.nome),
     }));
 
     // "empresa" fica de fora do upsert de propósito: no insert entra em branco, e no update uma

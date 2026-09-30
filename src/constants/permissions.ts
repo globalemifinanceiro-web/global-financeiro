@@ -7,6 +7,7 @@ export type PainelId =
   | 'notas-fiscais'
   | 'central-pagamentos'
   | 'conciliacao'
+  | 'acompanhamento'
   | 'fluxo-de-caixa'
   | 'projetos'
   | 'relatorios'
@@ -28,6 +29,7 @@ const PERMISSOES: Record<PerfilAcesso, PainelId[]> = {
     'notas-fiscais',
     'central-pagamentos',
     'conciliacao',
+    'acompanhamento',
     'fluxo-de-caixa',
     'projetos',
     'relatorios',
@@ -41,6 +43,7 @@ const PERMISSOES: Record<PerfilAcesso, PainelId[]> = {
     'contas-a-pagar',
     'contas-a-receber',
     'notas-fiscais',
+    'acompanhamento',
     'fluxo-de-caixa',
     'projetos',
     'relatorios',
@@ -54,6 +57,7 @@ const PERMISSOES: Record<PerfilAcesso, PainelId[]> = {
     'notas-fiscais',
     'central-pagamentos',
     'conciliacao',
+    'acompanhamento',
     'fluxo-de-caixa',
     'projetos',
     'relatorios',

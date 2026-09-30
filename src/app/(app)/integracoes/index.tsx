@@ -28,6 +28,16 @@ const INTEGRACOES: IntegracaoInfo[] = [
       'Botão "Sincronizar Projetos Global" na Central de Pagamentos busca as solicitações liberadas para o Financeiro. Registrar pagamento de volta lá ainda não foi implementado.',
   },
   {
+    id: 'projetos-solicitacoes',
+    nome: 'Projetos Global — Solicitações em aprovação',
+    descricao: 'NFs/recibos/boletos desde o lançamento, passando pelo Gestor e pelo Diretor.',
+    icone: 'git-network-outline',
+    status: 'Aguardando o Projetos',
+    tone: 'warning',
+    detalhe:
+      'Alimenta o pop-up de solicitação nova e a tela Acompanhamento. Depende da rota /api/integracao/financeiro/solicitacoes no Projetos Global.',
+  },
+  {
     id: 'sheets-receber',
     nome: 'Google Sheets — Contas a Receber',
     descricao: 'Planilha "Controle Contas à Receber", aba "à Receber".',
