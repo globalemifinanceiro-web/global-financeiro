@@ -72,6 +72,14 @@ export async function importarContasPagar(empresa: string, arquivoNome: string, 
   if (error) throw new Error(error.message);
 }
 
+/** Apaga a importação e, em cascata, os lançamentos que ela criou. */
+export async function desfazerImportacaoContasPagar(id: string): Promise<void> {
+  const { data, error } = await supabase.from('importacoes_contas_pagar').delete().eq('id', id).select('id');
+  if (error) throw new Error(error.message);
+  // Sem a permissão de exclusão (migration 0008), o Supabase não dá erro — só não apaga nada.
+  if (!data || data.length === 0) throw new Error('Não foi possível desfazer: confira se a migration 0008 já foi rodada no Supabase.');
+}
+
 export async function listarImportacoesContasPagar(): Promise<ImportacaoContasPagar[]> {
   const { data, error } = await supabase
     .from('importacoes_contas_pagar')

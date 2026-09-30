@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card } from '@/components/ui/Card';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SelectField } from '@/components/ui/SelectField';
 import { CNPJ_POR_EMPRESA, EMPRESAS, type NomeEmpresa } from '@/constants/empresas';
-import { useImportacoesContasPagar, useImportarContasPagar } from '@/hooks/useContasPagarPlanilhas';
+import { useDesfazerImportacaoContasPagar, useImportacoesContasPagar, useImportarContasPagar } from '@/hooks/useContasPagarPlanilhas';
+import type { ImportacaoContasPagar } from '@/services/supabase/contasPagarPlanilhas';
 import { lerPlanilhaContasPagar, type LeituraPlanilha } from '@/services/importacao/planilhaContasPagar';
 import { useFiltrosStore } from '@/stores/useFiltrosStore';
 import { formatBRL } from '@/utils/currency';
@@ -35,7 +36,34 @@ export function ImportarPlanilhaCard() {
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
   const importar = useImportarContasPagar();
+  const desfazer = useDesfazerImportacaoContasPagar();
   const { data: importacoes } = useImportacoesContasPagar();
+
+  async function executarDesfazer(importacao: ImportacaoContasPagar) {
+    setErro(null);
+    setSucesso(null);
+    try {
+      await desfazer.mutateAsync(importacao.id);
+      setSucesso(`Importação de ${importacao.arquivoNome} desfeita (${importacao.empresa}).`);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível desfazer a importação.');
+    }
+  }
+
+  function pedirDesfazer(importacao: ImportacaoContasPagar) {
+    const mensagem =
+      `Remover os ${importacao.linhas} lançamento(s) de ${importacao.arquivoNome} em ${importacao.empresa}? ` +
+      'Os dados que essa importação substituiu não voltam — se precisar deles, importe a planilha anterior de novo.';
+    // Alert.alert não funciona na versão web do React Native — lá usa o confirm() do navegador.
+    if (Platform.OS === 'web') {
+      if (window.confirm(mensagem)) executarDesfazer(importacao);
+      return;
+    }
+    Alert.alert('Desfazer importação', mensagem, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Desfazer', style: 'destructive', onPress: () => executarDesfazer(importacao) },
+    ]);
+  }
 
   function aoEscolher(arquivo: ArquivoLido) {
     setErro(null);
@@ -127,9 +155,15 @@ export function ImportarPlanilhaCard() {
         <View style={styles.historico}>
           <Text style={styles.historicoTitulo}>Últimas importações{empresa ? ` — ${empresa}` : ''}</Text>
           {ultimas.map((i) => (
-            <Text key={i.id} style={styles.nota}>
-              {formatDateTimeBR(i.createdAt)} · {i.arquivoNome} · {i.linhas} lançamento(s) · {descreverMeses(i.meses)}
-            </Text>
+            <View key={i.id} style={styles.importacao}>
+              <Text style={[styles.nota, styles.importacaoTexto]}>
+                {formatDateTimeBR(i.createdAt)} · {i.arquivoNome} · {i.linhas} lançamento(s) · {descreverMeses(i.meses)}
+                {empresa ? '' : ` · ${i.empresa}`}
+              </Text>
+              <Pressable onPress={() => pedirDesfazer(i)} disabled={desfazer.isPending} hitSlop={8}>
+                <Text style={styles.desfazer}>{desfazer.isPending && desfazer.variables === i.id ? 'Desfazendo...' : 'Desfazer'}</Text>
+              </Pressable>
+            </View>
           ))}
         </View>
       ) : null}
@@ -147,4 +181,7 @@ const styles = StyleSheet.create({
   sucesso: { ...typography.caption, color: colors.positive },
   historico: { gap: 2, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm },
   historicoTitulo: { ...typography.captionStrong, color: colors.textPrimary },
+  importacao: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  importacaoTexto: { flexShrink: 1 },
+  desfazer: { ...typography.captionStrong, color: colors.negative },
 });
