@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { invocarFuncao } from './functions';
 import type { NotaFiscal, NovaNotaFiscal, OrigemNF, SituacaoNF } from '@/types/notaFiscal';
 
 const BUCKET = 'notas-fiscais';
@@ -88,10 +89,7 @@ export async function atribuirEmpresaNotaFiscal(id: string, empresa: string): Pr
 
 /** Chama a Edge Function que busca as solicitações liberadas no Projetos Global e grava/remove aqui. */
 export async function sincronizarProjetosGlobal(): Promise<{ sincronizadas: number; removidas: number }> {
-  const { data, error } = await supabase.functions.invoke('sync-projetos-global');
-  if (error) throw new Error(error.message);
-  if (data?.error) throw new Error(data.error);
-  return data as { sincronizadas: number; removidas: number };
+  return invocarFuncao<{ sincronizadas: number; removidas: number }>('sync-projetos-global');
 }
 
 export async function excluirNotaFiscal(id: string, arquivoPath: string | null): Promise<void> {

@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { invocarFuncao } from './functions';
 import type { ContaFinanceira } from '@/types/finance';
 
 export type SituacaoContaReceberSheet = 'pendente' | 'paga' | 'cancelada';
@@ -117,8 +118,5 @@ export async function listarPendentesParaCobranca(): Promise<
 
 /** Chama a Edge Function que relê a planilha do Google Sheets e substitui os dados aqui. */
 export async function sincronizarContasReceberSheets(): Promise<{ sincronizadas: number }> {
-  const { data, error } = await supabase.functions.invoke('sync-contas-receber');
-  if (error) throw new Error(error.message);
-  if (data?.error) throw new Error(data.error);
-  return data as { sincronizadas: number };
+  return invocarFuncao<{ sincronizadas: number }>('sync-contas-receber');
 }
