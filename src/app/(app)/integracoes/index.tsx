@@ -28,13 +28,23 @@ const INTEGRACOES: IntegracaoInfo[] = [
       'Botão "Sincronizar Projetos Global" na Central de Pagamentos busca as solicitações liberadas para o Financeiro. Registrar pagamento de volta lá ainda não foi implementado.',
   },
   {
-    id: 'sheets',
-    nome: 'Google Sheets',
-    descricao: 'Metas, orçamentos, projeções e indicadores complementares.',
+    id: 'sheets-receber',
+    nome: 'Google Sheets — Contas a Receber',
+    descricao: 'Planilha "Controle Contas à Receber", aba "à Receber".',
+    icone: 'grid-outline',
+    status: 'Conectado (leitura)',
+    tone: 'positive',
+    detalhe:
+      'Botão "Sincronizar planilha" no Dashboard e em Contas a Receber relê a planilha. Registrar o pagamento de volta na coluna DT PGTO ainda não foi implementado.',
+  },
+  {
+    id: 'sheets-pagar',
+    nome: 'Google Sheets — Contas a Pagar',
+    descricao: 'Planilha de contas a pagar.',
     icone: 'grid-outline',
     status: 'Não configurado',
     tone: 'negative',
-    detalhe: 'Dashboard, Contas a Pagar/Receber, Fluxo de Caixa e Relatórios dependem desta integração, ainda pendente.',
+    detalhe: 'Contas a Pagar, Despesas por categoria e o lado de despesas do Fluxo de Caixa dependem desta integração.',
   },
 ];
 
