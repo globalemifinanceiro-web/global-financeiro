@@ -42,8 +42,9 @@ export default function ConfiguracoesScreen() {
         <Text style={styles.modoLabel}>Modo de dados atual</Text>
         <Badge label={dataMode === 'demo' ? 'Demonstração' : 'Real'} tone={dataMode === 'demo' ? 'warning' : 'positive'} />
         <Text style={styles.modoTexto}>
-          Definido pela variável EXPO_PUBLIC_DATA_MODE. Trocar para &ldquo;real&rdquo; exige que o backend (Supabase +
-          Edge Functions do Projetos Global/Sheets) já esteja configurado.
+          Definido pela variável EXPO_PUBLIC_DATA_MODE. Em &ldquo;real&rdquo;, a Central de Pagamentos e a
+          sincronização com o Projetos Global já usam dados de verdade; Dashboard, Contas a Pagar/Receber, Fluxo de
+          Caixa e Relatórios ainda dependem da integração com o Google Sheets, pendente de implementação.
         </Text>
       </Card>
 

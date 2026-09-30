@@ -3,9 +3,12 @@ export type SituacaoNF = 'pendente' | 'paga' | 'cancelada';
 export type FormaPagamento = 'Pix' | 'Boleto' | 'Transferência' | 'Cartão' | 'Dinheiro' | 'Outra';
 export const FORMAS_PAGAMENTO: FormaPagamento[] = ['Pix', 'Boleto', 'Transferência', 'Cartão', 'Dinheiro', 'Outra'];
 
+export type OrigemNF = 'manual' | 'projetos_global';
+
 export interface NotaFiscal {
   id: string;
-  empresa: string;
+  /** Nula enquanto uma nota vinda do Projetos Global ainda não foi classificada por empresa. */
+  empresa: string | null;
   clienteOuFornecedor: string;
   numeroDocumento: string | null;
   valor: number;
@@ -18,9 +21,18 @@ export interface NotaFiscal {
   arquivoNome: string | null;
   observacoes: string | null;
   createdAt: string;
+  origem: OrigemNF;
+  /** Status original da solicitação no Projetos Global (liberado_financeiro/pagamento_agendado/pago), quando vem de lá. */
+  projetosGlobalStatus: string | null;
+  projetoPcg: string | null;
+  projetoNome: string | null;
 }
 
-export type NovaNotaFiscal = Omit<NotaFiscal, 'id' | 'createdAt' | 'situacao'> & { situacao?: SituacaoNF };
+/** Criação manual (formulário) — sempre tem empresa definida e nunca vem do Projetos Global. */
+export type NovaNotaFiscal = Pick<
+  NotaFiscal,
+  'clienteOuFornecedor' | 'numeroDocumento' | 'valor' | 'vencimento' | 'formaPagamento' | 'assinado' | 'arquivoPath' | 'arquivoNome' | 'observacoes'
+> & { empresa: string; situacao?: SituacaoNF };
 
 /**
  * Status de vencimento, na régua exata pedida:

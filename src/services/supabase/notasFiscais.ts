@@ -1,11 +1,11 @@
 import { supabase } from './client';
-import type { NotaFiscal, NovaNotaFiscal, SituacaoNF } from '@/types/notaFiscal';
+import type { NotaFiscal, NovaNotaFiscal, OrigemNF, SituacaoNF } from '@/types/notaFiscal';
 
 const BUCKET = 'notas-fiscais';
 
 interface NotaFiscalRow {
   id: string;
-  empresa: string;
+  empresa: string | null;
   cliente_ou_fornecedor: string;
   numero_documento: string | null;
   valor: number;
@@ -17,6 +17,10 @@ interface NotaFiscalRow {
   arquivo_nome: string | null;
   observacoes: string | null;
   created_at: string;
+  origem: OrigemNF;
+  projetos_global_status: string | null;
+  projeto_pcg: string | null;
+  projeto_nome: string | null;
 }
 
 function paraNotaFiscal(row: NotaFiscalRow): NotaFiscal {
@@ -34,6 +38,10 @@ function paraNotaFiscal(row: NotaFiscalRow): NotaFiscal {
     arquivoNome: row.arquivo_nome,
     observacoes: row.observacoes,
     createdAt: row.created_at,
+    origem: row.origem,
+    projetosGlobalStatus: row.projetos_global_status,
+    projetoPcg: row.projeto_pcg,
+    projetoNome: row.projeto_nome,
   };
 }
 
@@ -70,6 +78,20 @@ export async function criarNotaFiscal(nota: NovaNotaFiscal): Promise<NotaFiscal>
 export async function atualizarSituacaoNotaFiscal(id: string, situacao: SituacaoNF): Promise<void> {
   const { error } = await supabase.from('notas_fiscais').update({ situacao, updated_at: new Date().toISOString() }).eq('id', id);
   if (error) throw new Error(error.message);
+}
+
+/** Classifica na empresa (CNPJ) certa uma nota vinda do Projetos Global. */
+export async function atribuirEmpresaNotaFiscal(id: string, empresa: string): Promise<void> {
+  const { error } = await supabase.from('notas_fiscais').update({ empresa, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+/** Chama a Edge Function que busca as solicitações liberadas no Projetos Global e grava/remove aqui. */
+export async function sincronizarProjetosGlobal(): Promise<{ sincronizadas: number; removidas: number }> {
+  const { data, error } = await supabase.functions.invoke('sync-projetos-global');
+  if (error) throw new Error(error.message);
+  if (data?.error) throw new Error(data.error);
+  return data as { sincronizadas: number; removidas: number };
 }
 
 export async function excluirNotaFiscal(id: string, arquivoPath: string | null): Promise<void> {

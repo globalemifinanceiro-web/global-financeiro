@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useFiltrosStore } from '@/stores/useFiltrosStore';
 import {
+  atribuirEmpresaNotaFiscal,
   atualizarSituacaoNotaFiscal,
   criarNotaFiscal,
   excluirNotaFiscal,
   listarNotasFiscais,
+  sincronizarProjetosGlobal,
 } from '@/services/supabase/notasFiscais';
 import type { NovaNotaFiscal, SituacaoNF } from '@/types/notaFiscal';
 
@@ -48,6 +50,22 @@ export function useExcluirNotaFiscal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, arquivoPath }: { id: string; arquivoPath: string | null }) => excluirNotaFiscal(id, arquivoPath),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [CHAVE] }),
+  });
+}
+
+export function useAtribuirEmpresaNotaFiscal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, empresa }: { id: string; empresa: string }) => atribuirEmpresaNotaFiscal(id, empresa),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [CHAVE] }),
+  });
+}
+
+export function useSincronizarProjetosGlobal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: sincronizarProjetosGlobal,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [CHAVE] }),
   });
 }

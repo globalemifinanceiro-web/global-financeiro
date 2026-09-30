@@ -29,7 +29,7 @@ export function EmptyState({
 
 export function ErrorState({
   title = 'Não foi possível carregar os dados',
-  description = 'Tente novamente em instantes.',
+  description = 'Tente novamente, ou verifique se a integração correspondente já está configurada.',
   onRetry,
 }: {
   title?: string;

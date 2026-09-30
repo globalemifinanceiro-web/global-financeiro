@@ -7,8 +7,7 @@ import type { FinanceDataSource } from '@/services/data/FinanceDataSource';
  */
 function naoImplementado(metodo: string): never {
   throw new Error(
-    `[Global Financeiro] Integração real ainda não configurada (${metodo}). ` +
-      'Defina EXPO_PUBLIC_DATA_MODE=demo ou finalize a Etapa 2 (backend Supabase) antes de usar o modo real.'
+    `[Global Financeiro] Este painel (${metodo}) depende da integração com o Google Sheets, que ainda não foi implementada.`
   );
 }
 

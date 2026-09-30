@@ -33,6 +33,8 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+supabase/.secrets.env
+supabase/.temp
 
 # planilhas de referência com dados financeiros reais da empresa (não versionar)
 /*.xlsx

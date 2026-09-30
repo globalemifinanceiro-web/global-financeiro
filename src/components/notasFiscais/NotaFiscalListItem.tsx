@@ -71,6 +71,11 @@ export function NotaFiscalListItem({ nota }: { nota: NotaFiscal }) {
           Vencimento {formatDateBR(nota.vencimento)} · {descricaoPrazo(dias, nota.situacao === 'paga')}
         </Text>
         {nota.numeroDocumento ? <Text style={styles.meta}>Doc. {nota.numeroDocumento}</Text> : null}
+        {nota.origem === 'projetos_global' ? (
+          <Text style={styles.meta}>
+            Vem do Projetos Global{nota.projetoPcg ? ` · PCG ${nota.projetoPcg}` : ''} — pagamento é registrado lá
+          </Text>
+        ) : null}
       </View>
 
       <View style={styles.direita}>
@@ -82,7 +87,7 @@ export function NotaFiscalListItem({ nota }: { nota: NotaFiscal }) {
               <Ionicons name="document-attach-outline" size={18} color={colors.blue} />
             </Pressable>
           ) : null}
-          {nota.situacao === 'pendente' ? (
+          {nota.situacao === 'pendente' && nota.origem === 'manual' ? (
             <Pressable onPress={marcarComoPaga} hitSlop={8}>
               <Ionicons name="checkmark-circle-outline" size={18} color={colors.positive} />
             </Pressable>

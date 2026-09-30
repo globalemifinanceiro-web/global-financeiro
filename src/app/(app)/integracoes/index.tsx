@@ -3,8 +3,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { DemoBanner } from '@/components/ui/DemoBanner';
-import { dataMode } from '@/services/data';
-import { formatDateTimeBR } from '@/utils/date';
 import { colors, radius, spacing, typography } from '@/theme';
 import type { StatusTone } from '@/theme';
 
@@ -13,6 +11,9 @@ interface IntegracaoInfo {
   nome: string;
   descricao: string;
   icone: keyof typeof Ionicons.glyphMap;
+  status: string;
+  tone: StatusTone;
+  detalhe: string;
 }
 
 const INTEGRACOES: IntegracaoInfo[] = [
@@ -21,18 +22,23 @@ const INTEGRACOES: IntegracaoInfo[] = [
     nome: 'Projetos Global (PWA)',
     descricao: 'Custos, notas fiscais, recibos, fotos e documentos anexados nos projetos, para aprovação e pagamento.',
     icone: 'link-outline',
+    status: 'Conectado (leitura)',
+    tone: 'positive',
+    detalhe:
+      'Botão "Sincronizar Projetos Global" na Central de Pagamentos busca as solicitações liberadas para o Financeiro. Registrar pagamento de volta lá ainda não foi implementado.',
   },
-  { id: 'sheets', nome: 'Google Sheets', descricao: 'Metas, orçamentos, projeções e indicadores complementares.', icone: 'grid-outline' },
+  {
+    id: 'sheets',
+    nome: 'Google Sheets',
+    descricao: 'Metas, orçamentos, projeções e indicadores complementares.',
+    icone: 'grid-outline',
+    status: 'Não configurado',
+    tone: 'negative',
+    detalhe: 'Dashboard, Contas a Pagar/Receber, Fluxo de Caixa e Relatórios dependem desta integração, ainda pendente.',
+  },
 ];
 
-function statusAtual(): { label: string; tone: StatusTone } {
-  if (dataMode === 'demo') return { label: 'Modo de demonstração', tone: 'warning' };
-  return { label: 'Não configurado', tone: 'negative' };
-}
-
 export default function IntegracoesScreen() {
-  const status = statusAtual();
-
   return (
     <View style={styles.container}>
       <DemoBanner />
@@ -47,14 +53,10 @@ export default function IntegracoesScreen() {
               <Text style={styles.nome}>{integracao.nome}</Text>
               <Text style={styles.descricao}>{integracao.descricao}</Text>
             </View>
-            <Badge label={status.label} tone={status.tone} />
+            <Badge label={integracao.status} tone={integracao.tone} />
           </View>
           <View style={styles.footer}>
-            <Text style={styles.detalhe}>
-              {dataMode === 'demo'
-                ? 'Nenhuma chamada real é feita — os dados exibidos no app são fictícios.'
-                : `Última sincronização: ${formatDateTimeBR(new Date())}`}
-            </Text>
+            <Text style={styles.detalhe}>{integracao.detalhe}</Text>
           </View>
         </Card>
       ))}
