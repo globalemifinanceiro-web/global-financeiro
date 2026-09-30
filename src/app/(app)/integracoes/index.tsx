@@ -32,10 +32,20 @@ const INTEGRACOES: IntegracaoInfo[] = [
     nome: 'Google Sheets — Contas a Receber',
     descricao: 'Planilha "Controle Contas à Receber", aba "à Receber".',
     icone: 'grid-outline',
-    status: 'Conectado (leitura)',
+    status: 'Conectado',
     tone: 'positive',
     detalhe:
-      'Botão "Sincronizar planilha" no Dashboard e em Contas a Receber relê a planilha. Registrar o pagamento de volta na coluna DT PGTO ainda não foi implementado.',
+      'Botão "Sincronizar planilha" no Dashboard e em Contas a Receber relê a planilha. Comprovantes vinculados na Conciliação gravam a data na coluna DT PGTO.',
+  },
+  {
+    id: 'drive-comprovantes',
+    nome: 'Google Drive — Comprovantes',
+    descricao: 'Pasta "comprovantes", onde ficam os anexos da Conciliação.',
+    icone: 'folder-open-outline',
+    status: 'Conectado (gravação)',
+    tone: 'positive',
+    detalhe:
+      'Cada comprovante enviado na Conciliação é salvo nessa pasta. Quando vinculado a uma conta a receber, a data também é gravada na coluna DT PGTO da planilha.',
   },
   {
     id: 'sheets-pagar',
