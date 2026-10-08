@@ -19,15 +19,7 @@ async function abrir(url: string) {
  * mostra a lista para abrir. A lista (em vez de abrir direto) evita o bloqueio de pop-up do
  * navegador, que barra janelas abertas depois de uma espera.
  */
-export function VerDocumentosProjetos({
-  solicitacaoId,
-  rotulo = 'Ver NF ›',
-  tipo = 'nota',
-}: {
-  solicitacaoId: string;
-  rotulo?: string;
-  tipo?: 'nota' | 'orcamento';
-}) {
+export function VerDocumentosProjetos({ solicitacaoId, rotulo = 'Ver NF ›' }: { solicitacaoId: string; rotulo?: string }) {
   const [aberto, setAberto] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [documentos, setDocumentos] = useState<DocumentosProjetos | null>(null);
@@ -38,7 +30,7 @@ export function VerDocumentosProjetos({
     setCarregando(true);
     setErro(null);
     try {
-      setDocumentos(await buscarDocumentosProjetos(solicitacaoId, tipo));
+      setDocumentos(await buscarDocumentosProjetos(solicitacaoId));
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível buscar os documentos.');
     } finally {
@@ -62,7 +54,7 @@ export function VerDocumentosProjetos({
       <Modal visible={aberto} transparent animationType="fade" onRequestClose={() => setAberto(false)}>
         <View style={styles.overlay}>
           <View style={styles.card}>
-            <Text style={styles.titulo}>{tipo === 'orcamento' ? 'Arquivo do orçamento' : 'Documentos da solicitação'}</Text>
+            <Text style={styles.titulo}>Documentos da solicitação</Text>
             {carregando ? (
               <ActivityIndicator color={colors.blue} />
             ) : erro ? (
@@ -78,9 +70,7 @@ export function VerDocumentosProjetos({
                       <Text style={styles.itemNome} numberOfLines={2}>
                         {d.nome}
                       </Text>
-                      <Text style={styles.nota}>
-                        {d.destaque ? 'Documento assinado (Gestor e Diretoria)' : tipo === 'orcamento' ? 'Orçamento/proposta' : 'Anexo'}
-                      </Text>
+                      <Text style={styles.nota}>{d.destaque ? 'Documento assinado (Gestor e Diretoria)' : 'Anexo'}</Text>
                     </View>
                     <Ionicons name="open-outline" size={16} color={colors.textSecondary} />
                   </Pressable>

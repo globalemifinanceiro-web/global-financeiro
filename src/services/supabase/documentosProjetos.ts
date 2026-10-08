@@ -5,7 +5,7 @@ export interface DocumentosProjetos {
   anexos: { nome: string; url: string }[];
 }
 
-/** Links novos (válidos por 1 hora) dos documentos de uma solicitação ou de um orçamento do Projetos. */
-export function buscarDocumentosProjetos(id: string, tipo: 'nota' | 'orcamento' = 'nota'): Promise<DocumentosProjetos> {
-  return invocarFuncao<DocumentosProjetos>('documentos-projetos', { id, tipo });
+/** Links novos (válidos por 1 hora) do documento assinado e dos anexos de uma solicitação do Projetos. */
+export function buscarDocumentosProjetos(id: string): Promise<DocumentosProjetos> {
+  return invocarFuncao<DocumentosProjetos>('documentos-projetos', { id });
 }

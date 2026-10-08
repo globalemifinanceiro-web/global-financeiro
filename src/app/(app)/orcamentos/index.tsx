@@ -1,14 +1,40 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { VerDocumentosProjetos } from '@/components/solicitacoes/VerDocumentosProjetos';
+import { useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { EmptyState, LoadingState } from '@/components/ui/StateViews';
 import { usePainelOrcamentos } from '@/hooks/useOrcamentosProjetos';
+import { urlArquivoOrcamento } from '@/services/supabase/orcamentosProjetos';
 import { useFiltrosStore } from '@/stores/useFiltrosStore';
 import type { OrcamentoProjetos } from '@/types/orcamento';
 import { formatBRL } from '@/utils/currency';
 import { formatDateBR, formatDateTimeBR } from '@/utils/date';
 import { colors, spacing, typography } from '@/theme';
+
+function LinkArquivo({ caminho, rotulo }: { caminho: string; rotulo: string }) {
+  const [abrindo, setAbrindo] = useState(false);
+
+  async function abrir() {
+    setAbrindo(true);
+    try {
+      const url = await urlArquivoOrcamento(caminho);
+      if (Platform.OS === 'web') {
+        window.open(url, '_blank');
+      } else {
+        const { openURL } = await import('expo-linking');
+        await openURL(url);
+      }
+    } finally {
+      setAbrindo(false);
+    }
+  }
+
+  return (
+    <Pressable onPress={abrir} disabled={abrindo} hitSlop={8}>
+      <Text style={styles.link}>{abrindo ? 'Abrindo...' : rotulo}</Text>
+    </Pressable>
+  );
+}
 
 function OrcamentoItem({ o }: { o: OrcamentoProjetos }) {
   return (
@@ -31,12 +57,17 @@ function OrcamentoItem({ o }: { o: OrcamentoProjetos }) {
           {o.gestorNome ? ` · Gestor: ${o.gestorNome}` : ''}
         </Text>
         {o.enviadoPor ? <Text style={styles.meta}>Enviado por {o.enviadoPor}</Text> : null}
-        <VerDocumentosProjetos solicitacaoId={o.id} tipo="orcamento" rotulo="Ver orçamento ›" />
+        <View style={styles.links}>
+          {o.assinadoPath ? <LinkArquivo caminho={o.assinadoPath} rotulo="Orçamento assinado ›" /> : null}
+          {o.arquivoPath ? <LinkArquivo caminho={o.arquivoPath} rotulo="Arquivo original ›" /> : null}
+          {!o.assinadoPath && !o.arquivoPath ? <Text style={styles.meta}>Arquivo ainda não copiado do Projetos</Text> : null}
+        </View>
       </View>
       <View style={styles.direita}>
         {o.valor !== null ? <Text style={styles.valor}>{formatBRL(o.valor)}</Text> : null}
-        {o.vencimento ? <Text style={styles.meta}>Vence {formatDateBR(o.vencimento)}</Text> : null}
-        {o.formaPagamento ? <Text style={styles.meta}>{o.formaPagamento}</Text> : null}
+        {o.validade ? <Text style={styles.meta}>Válido até {formatDateBR(o.validade)}</Text> : null}
+        {o.condicaoPagamento ? <Text style={styles.meta}>{o.condicaoPagamento.replace(/_/g, ' ')}</Text> : null}
+        {o.quantidadeItens > 0 ? <Text style={styles.meta}>{o.quantidadeItens} item(ns)</Text> : null}
       </View>
     </View>
   );
@@ -91,6 +122,8 @@ const styles = StyleSheet.create({
   titulo: { ...typography.bodyStrong, color: colors.textPrimary },
   meta: { ...typography.caption, color: colors.textSecondary },
   erro: { ...typography.caption, color: colors.negative },
+  links: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: 2 },
+  link: { ...typography.captionStrong, color: colors.blue },
   direita: { alignItems: 'flex-end', gap: 2 },
   valor: { ...typography.bodyStrong, color: colors.textPrimary },
 });

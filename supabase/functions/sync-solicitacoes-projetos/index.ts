@@ -44,6 +44,9 @@ Deno.serve(async (req) => {
     if (ultima?.atualizado_em) url.searchParams.set('desde', new Date(new Date(ultima.atualizado_em).getTime() - MARGEM_MS).toISOString());
 
     const resposta = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (resposta.status === 401) {
+      return json({ error: 'O Projetos Global recusou a chave da integração (verifique FINANCEIRO_SYNC_TOKEN no Netlify do Projetos).' }, 502);
+    }
     if (resposta.status === 404) {
       return json({ error: 'O Projetos Global ainda não publicou a rota de solicitações (/api/integracao/financeiro/solicitacoes).' }, 502);
     }

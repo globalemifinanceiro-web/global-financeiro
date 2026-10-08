@@ -41,9 +41,10 @@ const INTEGRACOES: IntegracaoInfo[] = [
     nome: 'Projetos Global — Orçamentos aprovados',
     descricao: 'Orçamentos/propostas aprovados pelo Gestor e pela Diretoria.',
     icone: 'pricetags-outline',
-    status: 'Aguardando o Projetos',
-    tone: 'warning',
-    detalhe: 'Alimenta a aba Orçamentos e o aviso de orçamento aprovado. Depende da rota /api/integracao/financeiro/orcamentos no Projetos Global.',
+    status: 'Conectado (leitura)',
+    tone: 'positive',
+    detalhe:
+      'Alimenta a aba Orçamentos e o aviso de orçamento aprovado, a cada 2 minutos. Os arquivos do orçamento são copiados para o Financeiro (os links do Projetos expiram em 1 hora).',
   },
   {
     id: 'sheets-receber',

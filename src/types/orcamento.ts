@@ -6,18 +6,20 @@ export interface OrcamentoProjetos {
   projetoCliente: string | null;
   empresa: string | null;
   fornecedor: string | null;
-  tipoDocumento: string | null;
   numeroDocumento: string | null;
   emissao: string | null;
-  vencimento: string | null;
+  validade: string | null;
   valor: number | null;
-  formaPagamento: string | null;
-  categoria: string | null;
+  condicaoPagamento: string | null;
   descricao: string | null;
+  quantidadeItens: number;
   enviadoPor: string | null;
-  enviadoEm: string | null;
   gestorNome: string | null;
-  gestorEm: string | null;
   diretoriaNome: string | null;
   aprovadoEm: string;
+  /** Cópias no storage do Financeiro (bucket "orcamentos"). */
+  arquivoPath: string | null;
+  arquivoNome: string | null;
+  assinadoPath: string | null;
+  assinadoNome: string | null;
 }

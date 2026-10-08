@@ -34,6 +34,9 @@ Deno.serve(async (req) => {
     if (userError || !userData?.user) return json({ error: 'Não autenticado.' }, 401);
 
     const resposta = await fetch(API_URL, { headers: { Authorization: `Bearer ${token}` } });
+    if (resposta.status === 401) {
+      return json({ error: 'O Projetos Global recusou a chave da integração (verifique FINANCEIRO_SYNC_TOKEN no Netlify do Projetos).' }, 502);
+    }
     if (!resposta.ok) {
       return json({ error: `Falha ao consultar o Projetos Global (HTTP ${resposta.status}).` }, 502);
     }
