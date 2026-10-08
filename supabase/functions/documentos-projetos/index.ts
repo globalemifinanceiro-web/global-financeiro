@@ -1,5 +1,5 @@
 // Devolve links novos (válidos por 1 hora) do documento assinado e dos anexos de uma solicitação
-// do Projetos Global. Os links expiram, então não são guardados na sincronização — são pedidos na
+// do Projetos Global — ou do arquivo de um orçamento aprovado (tipo: 'orcamento'). Os links expiram, então não são guardados na sincronização — são pedidos na
 // hora em que alguém clica para ver a NF.
 //
 // Segredo: PROJETOS_GLOBAL_SYNC_TOKEN
@@ -12,6 +12,7 @@ const corsHeaders = {
 };
 
 const API_URL = 'https://projetos-global.netlify.app/api/integracao/financeiro/notas';
+const ORCAMENTOS_URL = 'https://projetos-global.netlify.app/api/integracao/financeiro/orcamentos';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -39,8 +40,17 @@ Deno.serve(async (req) => {
     const { data: userData, error: userError } = await local.auth.getUser();
     if (userError || !userData?.user) return json({ error: 'Não autenticado.' }, 401);
 
-    const { id } = (await req.json().catch(() => ({}))) as { id?: string };
+    const { id, tipo } = (await req.json().catch(() => ({}))) as { id?: string; tipo?: 'nota' | 'orcamento' };
     if (!id) return json({ error: 'Informe a solicitação.' }, 400);
+
+    if (tipo === 'orcamento') {
+      const resposta = await fetch(ORCAMENTOS_URL, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resposta.ok) return json({ error: `Falha ao consultar o Projetos Global (HTTP ${resposta.status}).` }, 502);
+      const corpo = await resposta.json();
+      const orcamento = (Array.isArray(corpo?.orcamentos) ? corpo.orcamentos : []).find((o: { id?: string }) => o.id === id);
+      if (!orcamento) return json({ error: 'Orçamento não encontrado entre os aprovados no Projetos Global.' }, 404);
+      return json({ documentoAssinado: [], anexos: comLink(orcamento.arquivos) });
+    }
 
     const resposta = await fetch(API_URL, { headers: { Authorization: `Bearer ${token}` } });
     if (!resposta.ok) return json({ error: `Falha ao consultar o Projetos Global (HTTP ${resposta.status}).` }, 502);

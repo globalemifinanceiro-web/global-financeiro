@@ -22,20 +22,28 @@ const INTEGRACOES: IntegracaoInfo[] = [
     nome: 'Projetos Global (PWA)',
     descricao: 'Custos, notas fiscais, recibos, fotos e documentos anexados nos projetos, para aprovação e pagamento.',
     icone: 'link-outline',
-    status: 'Conectado (leitura)',
+    status: 'Conectado',
     tone: 'positive',
     detalhe:
-      'Botão "Sincronizar Projetos Global" na Central de Pagamentos busca as solicitações liberadas para o Financeiro. Registrar pagamento de volta lá ainda não foi implementado.',
+      'Botão "Sincronizar Projetos Global" na Central de Pagamentos busca as NFs liberadas para o Financeiro. O comprovante anexado na Conciliação registra o pagamento lá.',
   },
   {
     id: 'projetos-solicitacoes',
     nome: 'Projetos Global — Solicitações em aprovação',
     descricao: 'NFs/recibos/boletos desde o lançamento, passando pelo Gestor e pelo Diretor.',
     icone: 'git-network-outline',
+    status: 'Conectado (leitura)',
+    tone: 'positive',
+    detalhe: 'Alimenta o pop-up de solicitação nova e a tela Acompanhamento, atualizados a cada 2 minutos.',
+  },
+  {
+    id: 'projetos-orcamentos',
+    nome: 'Projetos Global — Orçamentos aprovados',
+    descricao: 'Orçamentos/propostas aprovados pelo Gestor e pela Diretoria.',
+    icone: 'pricetags-outline',
     status: 'Aguardando o Projetos',
     tone: 'warning',
-    detalhe:
-      'Alimenta o pop-up de solicitação nova e a tela Acompanhamento. Depende da rota /api/integracao/financeiro/solicitacoes no Projetos Global.',
+    detalhe: 'Alimenta a aba Orçamentos e o aviso de orçamento aprovado. Depende da rota /api/integracao/financeiro/orcamentos no Projetos Global.',
   },
   {
     id: 'sheets-receber',

@@ -2,6 +2,7 @@ import { usePathname } from 'expo-router';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { AlertaVencimentoModal } from '@/components/notasFiscais/AlertaVencimentoModal';
+import { AlertaOrcamentoModal } from '@/components/orcamentos/AlertaOrcamentoModal';
 import { AlertaSolicitacaoModal } from '@/components/solicitacoes/AlertaSolicitacaoModal';
 import { BottomTabBar } from './BottomTabBar';
 import { EmpresaSwitcher } from './EmpresaSwitcher';
@@ -10,6 +11,7 @@ import { TopBar } from './TopBar';
 import { NAV_ITEMS } from '@/constants/navigation';
 import { useAlertaCobranca } from '@/hooks/useAlertaCobranca';
 import { useAlertaVencimentoNF } from '@/hooks/useAlertaVencimentoNF';
+import { useAlertaOrcamentos } from '@/hooks/useOrcamentosProjetos';
 import { useAlertaSolicitacoes } from '@/hooks/useSolicitacoesProjetos';
 import { breakpoints, colors, spacing } from '@/theme';
 
@@ -34,11 +36,14 @@ export function AppShell({ children }: AppShellProps) {
   const { paraAlertar, dispensar } = useAlertaVencimentoNF();
   const { paraAlertar: paraCobrar, dispensar: dispensarCobranca } = useAlertaCobranca();
   const { paraAlertar: solicitacoesNovas, dispensar: dispensarSolicitacoes } = useAlertaSolicitacoes();
+  const { paraAlertar: orcamentosAprovados, dispensar: dispensarOrcamentos } = useAlertaOrcamentos();
   const alertaModal =
     paraAlertar.length > 0 ? (
       <AlertaVencimentoModal notas={paraAlertar} onFechar={dispensar} />
     ) : solicitacoesNovas.length > 0 ? (
       <AlertaSolicitacaoModal solicitacoes={solicitacoesNovas} onFechar={dispensarSolicitacoes} />
+    ) : orcamentosAprovados.length > 0 ? (
+      <AlertaOrcamentoModal orcamentos={orcamentosAprovados} onFechar={dispensarOrcamentos} />
     ) : (
       <AlertaVencimentoModal notas={paraCobrar} onFechar={dispensarCobranca} titulo="Clientes com cobrança pendente" />
     );
